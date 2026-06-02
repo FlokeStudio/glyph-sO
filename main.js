@@ -421,7 +421,6 @@ class GlyphSearchModal extends Modal {
       self.inputEl.focus();
       self.render('');
     });
-    const self = this;
     this.inputEl.addEventListener('input', function () {
       self.active = 0;
       self.render(self.inputEl.value);
