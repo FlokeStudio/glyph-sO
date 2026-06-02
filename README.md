@@ -19,8 +19,8 @@
 | Feature | Example |
 |---------|---------|
 | **Each word** | `glyph senza` → notes containing both |
-| **Wrong layout** | `ufdthlf` → **гаверда** |
-| **Transliteration** | `gaverda` → **гаверда** |
+| **Wrong layout** | `,ehvfklf` → **бурмалда** |
+| **Transliteration** | `burmalda` → **бурмалда** |
 | **Context** | Bonus when several words appear in the same paragraph |
 | **Ollama (-On)** | Optional query expansion in settings |
 
