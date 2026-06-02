@@ -366,7 +366,7 @@ function rankSearchItems(items, q, opts) {
     return pool
       .slice()
       .sort(function (a, b) {
-        return (b.it.mtime || 0) - (a.it.mtime || 0);
+        return (b.mtime || 0) - (a.mtime || 0);
       })
       .slice(0, 12)
       .map(function (it) {
