@@ -2,58 +2,71 @@
   <a href="https://obsidian.md/"><img src="https://obsidian.md/images/obsidian-logo-gradient.svg" width="72" alt="Obsidian" /></a>
 </p>
 
-<h1 align="center">glyph-sO 2.3-O / On</h1>
+<h1 align="center">glyph-sO 2.3</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Obsidian-Plugin-7c3aed" alt="Obsidian" />
-  <img src="https://img.shields.io/badge/Glyph--S-2.3-green" alt="glyph-s" />
-  <a href="README.ru.md">Russian</a>
+  <a href="README.ru.md">🇷🇺 Русская документация</a>
 </p>
 
-**Vault search** powered by [Glyph-S](https://github.com/FlokeStudio/glyph-s) — every word, wrong keyboard layout, Latin↔Cyrillic, context ranking. Optional Ollama query expansion.
+## Why Glyph Search (for you)
 
----
+Obsidian gives you two different tools:
 
-## Features
+| Shortcut | What it does |
+|----------|----------------|
+| **Ctrl+O** | **Quick Switcher** — file *names* only, offers “create new file” |
+| **Sidebar search** | Full text in notes — but no layout/translit extras |
 
-| Feature | Example |
-|---------|---------|
-| **Each word** | `glyph senza` → notes containing both |
-| **Wrong layout** | `,ehvfklf` → **бурмалда** |
-| **Transliteration** | `burmalda` → **бурмалда** |
-| **Context** | Bonus when several words appear in the same paragraph |
-| **Ollama (-On)** | Optional query expansion in settings |
+**glyph-sO** is a single palette that searches **inside note text**, **headings**, and **#tags**, with the same reliable matching as Obsidian’s engine — plus features the sidebar does not have:
 
-**Hotkey:** `Ctrl+O` / `Cmd+O` (rebind if needed) · Command: **`Glyph: search vault`**
+- **Wrong keyboard layout** — `ufdthlf` finds `гаверда`
+- **Latin ↔ Cyrillic** — `gaverda` finds `гаверда`
+- **Highlighted snippets** — see the match before you open the note
+- **Filters** — `path:Journal`, `tag:утро`
+- **Recent queries** — one click to repeat a search
+- **Fast index** — built in the background when Obsidian starts
+
+Use it together with **[glyph-miO](https://github.com/FlokeStudio/glyph-miO)**: search finds the note, MI-O writes a short **summary** at the bottom.
+
+### How to open Glyph Search
+
+1. **Ribbon** — click the **search** icon on the left bar (always works).
+2. **Command palette** — `Glyph: search vault (full text)`.
+3. **Hotkey** — Obsidian does **not** always apply plugin defaults. Open **Settings → Hotkeys**, search `Glyph: search vault`, assign e.g. **Ctrl+Shift+G**, **Ctrl+Alt+G**, or **Ctrl+Shift+F**.
+
+> **Ctrl+O will never run glyph-sO** — that shortcut belongs to Obsidian’s Quick Switcher.
 
 ---
 
 ## Install
 
-`YOUR_VAULT/.obsidian/plugins/glyph-s-o/` — `manifest.json`, `main.js`, `styles.css`
-
 ```powershell
-powershell -ExecutionPolicy Bypass -File path\to\floke_dev\scripts\install-glyph-obsidian.ps1
+powershell -ExecutionPolicy Bypass -File F:\floke_dev\scripts\install-glyph-obsidian.ps1
 ```
 
-Enable plugin → **Ctrl+R**.
+Enable **glyph-sO 2.3** → **Ctrl+R**.
+
+Files: `YOUR_VAULT/.obsidian/plugins/glyph-s-o/` — `manifest.json`, `main.js`, `styles.css` (no npm, no vendor).
 
 ---
 
-## Settings
+## Tips
 
-- **Match every word** — AND semantics for multi-word queries  
-- **Wrong keyboard layout** — EN keys, Russian intent  
-- **Latin ↔ Cyrillic** — gaverda / гаверда  
-- **Ollama query enrich** — optional  
+| Query | Meaning |
+|-------|---------|
+| `шаурма` | Word anywhere in a note |
+| `path:Journal` | Only under folder path |
+| `tag:утро` | Notes with tag |
+| `note glyph` | Both words (AND) |
+
+**Ollama query enrich** is off by default (avoids slow/500 errors). Turn on only if Ollama runs locally with a working model.
 
 ---
 
-## Related
+## Technical
 
-| Repo | Role |
-|------|------|
-| [glyph-s](https://github.com/FlokeStudio/glyph-s) | Core engine + Floke landing bundle |
-| [glyph-miO](https://github.com/FlokeStudio/glyph-miO) | Note metadata |
+- Engine: Obsidian `prepareSimpleSearch` + Glyph-S ranking (layout, translit, context).
+- Index: parallel `cachedRead`, incremental update on file save.
+- Repo: [glyph-s](https://github.com/FlokeStudio/glyph-s) (core) · [glyph-miO](https://github.com/FlokeStudio/glyph-miO) (summaries).
 
 GPL-3.0 · Floke Studio
