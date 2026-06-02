@@ -7,7 +7,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Obsidian-Plugin-7c3aed" alt="Obsidian" />
   <img src="https://img.shields.io/badge/Glyph--S-2.3-green" alt="glyph-s" />
-  <a href="README.ru.md">🇷🇺 Русская документация</a>
+  <a href="README.ru.md">Russian</a>
 </p>
 
 **Vault search** powered by [Glyph-S](https://github.com/FlokeStudio/glyph-s) — every word, wrong keyboard layout, Latin↔Cyrillic, context ranking. Optional Ollama query expansion.
