@@ -1,0 +1,9 @@
+{
+  "name": "glyph-so",
+  "version": "2.3.0",
+  "private": true,
+  "scripts": {
+    "vendor": "node ../glyph-s/scripts/bundle-cjs.mjs"
+  },
+  "license": "GPL-3.0-or-later"
+}

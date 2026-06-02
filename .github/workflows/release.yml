@@ -1,0 +1,20 @@
+name: Release zip
+on:
+  push:
+    tags: ['v*']
+jobs:
+  zip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build vendor
+        run: |
+          cd ..
+          git clone --depth 1 https://github.com/FlokeStudio/glyph-s.git glyph-s 2>/dev/null || true
+          node glyph-s/scripts/bundle-cjs.mjs 2>/dev/null || true
+      - name: Pack plugin
+        run: |
+          zip -r glyph-so.zip manifest.json main.js styles.css versions.json vendor LICENSE README.md
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: glyph-so.zip

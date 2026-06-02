@@ -1,0 +1,27 @@
+.glyph-so-modal .modal-content {
+  padding: 1em;
+  min-width: min(520px, 92vw);
+}
+
+.glyph-so-input {
+  width: 100%;
+  margin-bottom: 0.75em;
+  padding: 0.5em 0.65em;
+  font-size: 1em;
+}
+
+.glyph-so-row {
+  padding: 0.45em 0.35em;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.glyph-so-row:hover,
+.glyph-so-row.is-active {
+  background: var(--background-modifier-hover);
+}
+
+.glyph-so-sub {
+  font-size: 0.82em;
+  opacity: 0.75;
+}

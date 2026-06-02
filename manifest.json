@@ -1,0 +1,10 @@
+{
+  "id": "glyph-s-o",
+  "name": "glyph-sO 2.3",
+  "version": "2.3.0",
+  "minAppVersion": "1.5.0",
+  "description": "Vault search powered by Glyph-S 2.3-O/On — ⌘O palette, fuzzy rank, optional Ollama.",
+  "author": "Floke Studio",
+  "authorUrl": "https://github.com/FlokeStudio",
+  "isDesktopOnly": false
+}
