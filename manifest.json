@@ -1,9 +1,9 @@
 {
   "id": "glyph-s-o",
-  "name": "glyph-sO 2.3",
-  "version": "2.3.0",
+  "name": "glyph-sO 2.7",
+  "version": "2.7.0",
   "minAppVersion": "1.5.0",
-  "description": "Full-text vault search (like Obsidian sidebar) — Ctrl+Shift+G, snippets, layout/translit extras.",
+  "description": "Full-text vault search for Obsidian with v2.7 engine profiles, snippets, layout fix and transliteration.",
   "author": "Floke Studio",
   "authorUrl": "https://github.com/FlokeStudio",
   "isDesktopOnly": false

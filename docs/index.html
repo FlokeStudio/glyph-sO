@@ -3,28 +3,40 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>glyph-sO | Floke Glyph</title>
+  <title>glyph-sO 2.7</title>
   <style>
     :root { color-scheme: dark; }
-    body { margin: 0; font-family: Inter, Segoe UI, Arial, sans-serif; background: #0a0b0f; color: #edf0ff; }
-    .wrap { max-width: 900px; margin: 0 auto; padding: 48px 20px; }
-    .card { border: 1px solid #20263b; border-radius: 18px; padding: 28px; background: #121624; }
+    body { margin: 0; font-family: Inter, Segoe UI, Arial, sans-serif; background: radial-gradient(circle at 20% 20%, #1f1734 0, #13111f 48%, #0e0d18 100%); color: #ebe9ff; }
+    .wrap { max-width: 920px; margin: 0 auto; padding: 52px 20px; }
+    .card { border: 1px solid #2f2a4e; border-radius: 18px; padding: 30px; background: rgba(18, 17, 31, 0.86); backdrop-filter: blur(3px); }
+    .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .brand img { width: 46px; height: 46px; }
     h1 { margin: 0 0 8px; font-size: 34px; }
-    p { color: #c0c7de; line-height: 1.55; }
+    p { color: #c6c4e2; line-height: 1.58; margin: 0 0 10px; }
+    .caps { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 4px; }
+    .cap { border: 1px solid #3a355d; border-radius: 999px; padding: 6px 10px; font-size: 12px; color: #d7d4ff; }
     .links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
-    a { color: #cdd7ff; text-decoration: none; border: 1px solid #2f3956; padding: 10px 14px; border-radius: 10px; }
+    a { color: #d9d6ff; text-decoration: none; border: 1px solid #3f3a64; padding: 10px 14px; border-radius: 10px; }
   </style>
 </head>
 <body>
   <main class="wrap">
     <section class="card">
-      <h1>glyph-sO 2.3</h1>
-      <p>Obsidian full-text search plugin: body search, snippets, keyboard layout correction, and transliteration.</p>
+      <div class="brand">
+        <img src="https://obsidian.md/images/obsidian-logo-gradient.svg" alt="Obsidian">
+        <strong>Obsidian Plugin</strong>
+      </div>
+      <h1>glyph-sO 2.7</h1>
+      <p>Full-text vault search for Obsidian with profile-based ranking, keyboard layout fixes, transliteration, and snippet-first navigation.</p>
+      <div class="caps">
+        <span class="cap">legacy / balanced / max-quality</span>
+        <span class="cap">path:, tag:, phrases, OR, excludes</span>
+        <span class="cap">offline-first</span>
+      </div>
       <div class="links">
         <a href="https://github.com/FlokeStudio/glyph-sO">Repository</a>
         <a href="https://github.com/FlokeStudio/glyph-miO">glyph-miO</a>
         <a href="https://github.com/FlokeStudio/glyph-s">glyph-s engine</a>
-        <a href="https://github.com/FlokeStudio/Floke">Floke Studio</a>
       </div>
     </section>
   </main>

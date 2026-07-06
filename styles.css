@@ -200,6 +200,20 @@
 
 }
 
+.glyph-so-compact .glyph-so-row {
+  padding: 0.38em 0.38em;
+}
+
+.glyph-so-compact .glyph-so-sub {
+  font-size: 0.74em;
+}
+
+.glyph-so-compact .glyph-so-snippet {
+  font-size: 0.77em;
+  margin-top: 0.25em;
+  opacity: 0.82;
+}
+
 
 
 .glyph-so-tips {

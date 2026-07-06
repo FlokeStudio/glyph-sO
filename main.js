@@ -6,6 +6,7 @@ const {
   Setting,
   prepareSimpleSearch,
 } = require('obsidian');
+const { rankGlyphResults, queryAlternatives } = require('./services/search-engine');
 
 const DEFAULT_OLLAMA_URL = 'http://127.0.0.1:11434';
 const DEFAULT_OLLAMA_MODEL = 'llama3.2';
@@ -460,6 +461,8 @@ const DEFAULT_SETTINGS = {
   matchAllWords: true,
   fuzzyLayout: true,
   fuzzyTransliteration: true,
+  searchProfile: 'balanced',
+  compactMode: true,
   hideHotkeyHint: false,
   recentQueries: [],
 };
@@ -473,7 +476,7 @@ class GlyphSoSettingTab extends PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl('h2', { text: 'Glyph Search-O 2.3' });
+    containerEl.createEl('h2', { text: 'Glyph Search-O 2.7' });
     new Setting(containerEl)
       .setName('Ollama query enrich (-On)')
       .setDesc('Optional: expand search query via local LLM.')
@@ -523,6 +526,29 @@ class GlyphSoSettingTab extends PluginSettingTab {
       .addToggle((t) =>
         t.setValue(this.plugin.settings.fuzzyTransliteration !== false).onChange(async (v) => {
           this.plugin.settings.fuzzyTransliteration = v;
+          await this.plugin.saveSettings();
+        })
+      );
+    new Setting(containerEl)
+      .setName('Search profile')
+      .setDesc('legacy: old behavior, balanced: faster default, max-quality: richer ranking.')
+      .addDropdown((d) =>
+        d
+          .addOption('legacy', 'legacy')
+          .addOption('balanced', 'balanced')
+          .addOption('max-quality', 'max-quality')
+          .setValue(this.plugin.settings.searchProfile || 'balanced')
+          .onChange(async (v) => {
+            this.plugin.settings.searchProfile = v;
+            await this.plugin.saveSettings();
+          })
+      );
+    new Setting(containerEl)
+      .setName('Compact mode')
+      .setDesc('Minimalist result rows for faster scanning.')
+      .addToggle((t) =>
+        t.setValue(this.plugin.settings.compactMode !== false).onChange(async (v) => {
+          this.plugin.settings.compactMode = v;
           await this.plugin.saveSettings();
         })
       );
@@ -584,6 +610,9 @@ function indexOneFile(app, f) {
         title: function () {
           return f.basename;
         },
+        body: function () {
+          return bodyText;
+        },
         sub: f.path,
         hash: f.path,
         keys: [f.basename, f.path, tagStr, headings],
@@ -629,6 +658,7 @@ class GlyphSearchModal extends Modal {
   onOpen() {
     const { contentEl } = this;
     contentEl.addClass('glyph-so-modal');
+    if (this.plugin.settings.compactMode !== false) contentEl.addClass('glyph-so-compact');
     const head = contentEl.createEl('div', { cls: 'glyph-so-head' });
     head.createEl('h2', { text: 'Glyph Search' });
     this.countEl = head.createEl('span', { cls: 'glyph-so-count', text: '' });
@@ -767,10 +797,11 @@ class GlyphSearchModal extends Modal {
     if (gen !== this._renderGen) return;
 
     const active = this.app.workspace.getActiveFile();
-    this._ranked = rankSearchItems(this.items, query, {
+    this._ranked = rankGlyphResults(this.items, query, this.plugin.settings, {
       limit: 40,
-      settings: this.plugin.settings,
-      activePath: active ? active.path : '',
+      onDiagnostics: (d) => {
+        this._lastDiagnostics = d;
+      },
     });
     this.listEl.empty();
     const self = this;
@@ -794,7 +825,7 @@ class GlyphSearchModal extends Modal {
     });
 
     if (!this._ranked.length && trimmed) {
-      const alt = expandQueryVariants(trimmed, this.plugin.settings);
+      const alt = queryAlternatives(trimmed, this.plugin.settings);
       const hint =
         alt.length > 1
           ? ' Попробуйте: ' + alt.slice(1).join(' · ')

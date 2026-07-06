@@ -14,7 +14,7 @@ jobs:
           node glyph-s/scripts/bundle-cjs.mjs 2>/dev/null || true
       - name: Pack plugin
         run: |
-          zip -r glyph-so.zip manifest.json main.js styles.css versions.json vendor LICENSE README.md
+          zip -r glyph-so.zip manifest.json main.js styles.css versions.json vendor services LICENSE README.md
       - uses: softprops/action-gh-release@v2
         with:
           files: glyph-so.zip
