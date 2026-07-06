@@ -20,6 +20,8 @@
 <p align="center">
   <a href="README.ru.md">🇷🇺 Русская документация</a>
   ·
+  <a href="docs/index.html">Mini landing</a>
+  ·
   <a href="https://github.com/FlokeStudio/glyph-miO">glyph-miO</a> (summaries)
   ·
   <a href="https://github.com/FlokeStudio/glyph-s">glyph-s</a> (engine)

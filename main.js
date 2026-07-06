@@ -7,7 +7,6 @@ const {
   prepareSimpleSearch,
 } = require('obsidian');
 
-/* --- inlined Glyph-S + Ollama (no vendor/) --- */
 const DEFAULT_OLLAMA_URL = 'http://127.0.0.1:11434';
 const DEFAULT_OLLAMA_MODEL = 'llama3.2';
 
@@ -19,7 +18,6 @@ function tokenizeQuery(q) {
     .filter((t) => t.length > 0);
 }
 
-/** EN keyboard → RU (wrong layout: ufdthlf → гаверда). */
 const EN2RU = {
   q: 'й', w: 'ц', e: 'у', r: 'к', t: 'е', y: 'н', u: 'г', i: 'ш', o: 'щ', p: 'з',
   '[': 'х', ']': 'ъ', a: 'ф', s: 'ы', d: 'в', f: 'а', g: 'п', h: 'р', j: 'о', k: 'л',
@@ -51,7 +49,6 @@ function swapKeyboardRuToEn(s) {
   return out;
 }
 
-/** Rough Latin ↔ Cyrillic (gaverda ↔ гаверда). */
 const LAT2CYR = {
   sh: 'ш', ch: 'ч', zh: 'ж', ya: 'я', yo: 'ё', yu: 'ю', ye: 'е',
   a: 'а', b: 'б', v: 'в', g: 'г', d: 'д', e: 'е', z: 'з', i: 'и',
