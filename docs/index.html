@@ -105,15 +105,23 @@
     <h1>Search your vault.<br>Find anything, fast.</h1>
     <p class="lead">glyph-sO brings full-text search to Obsidian with keyboard-first navigation, smart ranking profiles, and an extended query language — all offline by default.</p>
     <div class="cta-row">
-      <a class="btn btn-primary" href="https://github.com/FlokeStudio/glyph-sO/releases">Download 2.7</a>
+      <a class="btn btn-primary" href="https://github.com/FlokeStudio/glyph-sO">Get 2.7.2 (main)</a>
       <a class="btn btn-secondary" href="https://github.com/FlokeStudio/glyph-sO/blob/main/README.md">Read the docs</a>
     </div>
   </header>
 
   <section class="section">
-    <h2>What’s new in 2.7</h2>
-    <p class="sub">A modular rewrite on top of the shared <code>glyph-s</code> engine — faster, smarter, and easier to maintain.</p>
+    <h2>What’s new in 2.7.2</h2>
+    <p class="sub">Correctness on top of the shared <code>glyph-s</code> engine — full-text body search and snippet highlights that actually show.</p>
     <div class="grid">
+      <article class="card">
+        <h3>Body in the fast-path</h3>
+        <p>Words that appear only inside paragraphs now reach scoring. Full-text search matches the README claim again.</p>
+      </article>
+      <article class="card">
+        <h3>Snippet highlight</h3>
+        <p>Match offsets from the engine are preserved — the hit in the grey snippet is highlighted, not stripped.</p>
+      </article>
       <article class="card">
         <h3>Search profiles</h3>
         <p>Choose how the engine balances speed and precision: <code>legacy</code> for compatibility, <code>balanced</code> for daily use, <code>max-quality</code> when you need the deepest scan.</p>

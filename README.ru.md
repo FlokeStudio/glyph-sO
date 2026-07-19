@@ -7,7 +7,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Obsidian-Plugin-7c3aed" alt="Плагин Obsidian" />
   <img src="https://img.shields.io/badge/Glyph--S-2.7-green" alt="Glyph-S 2.7" />
-  <img src="https://img.shields.io/badge/версия-2.7.1-blue" alt="версия 2.7.1" />
+  <img src="https://img.shields.io/badge/версия-2.7.2-blue" alt="версия 2.7.2" />
   <img src="https://img.shields.io/badge/офлайн-brightgreen" alt="офлайн" />
   <img src="https://img.shields.io/badge/лицензия-GPL--3.0-lightgrey" alt="GPL-3.0" />
 </p>
@@ -32,6 +32,12 @@
 **glyph-sO** — бесплатный **плагин для [Obsidian](https://obsidian.md/)**. Открывает палитру поиска и находит **любое слово в тексте заметок** — в теле, в заголовках, в `#тегах` и в тегах из YAML в начале файла.
 
 Это часть линейки **Glyph 2.7** (Floke Studio). Работает **без интернета** и **без npm**. [Ollama](https://ollama.com/) для расширения запроса **по умолчанию выключена**.
+
+### Что нового в 2.7.2
+
+- **Полнотекстовый поиск по телу** — fast-path ядра glyph-s учитывает body, слова только в абзацах больше не отсекаются до скоринга.
+- **Подсветка совпадения в сниппете** — адаптер сохраняет offsets из `<mark>`, UI снова выделяет найденное слово.
+- Удалён мёртвый дубликат ранжирования в `main.js` (~250 строк) — рабочий путь только через `services/search-engine.js`.
 
 ### Что нового в 2.7.1
 

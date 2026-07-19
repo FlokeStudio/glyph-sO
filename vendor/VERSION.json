@@ -1,7 +1,7 @@
 {
   "name": "glyph-s",
-  "version": "2.7.1",
-  "stampedAt": "2026-07-19T00:50:16.057Z",
+  "version": "2.7.2",
+  "stampedAt": "2026-07-19T00:58:01.213Z",
   "files": [
     "engine.js",
     "engine.cjs",

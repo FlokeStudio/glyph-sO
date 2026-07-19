@@ -33,6 +33,14 @@ The plugin is part of the **Glyph 2.7** family and runs on the shared [`glyph-s`
 | Query filters | Limited | `path:`, `tag:`, phrases, OR, excludes |
 | Offline | Yes | Yes (Ollama optional) |
 
+### What’s new in 2.7.2
+
+**Full-text search actually searches the body** — the vendored glyph-s fast-path now includes note body text, so words buried only in paragraphs are no longer dropped before scoring.
+
+**Snippet match highlight** — results show the matched span again (adapter keeps offsets from engine `<mark>` instead of stripping them).
+
+**Leaner `main.js`** — removed ~250 lines of unused pre-2.7 ranking duplicates; search goes through `services/search-engine.js` → `vendor/engine.js` only.
+
 ### What’s new in 2.7.1
 
 **Clearer profiles** — settings show **Fast / Standard / Deep** (stored values remain `legacy` / `balanced` / `max-quality`) with tooltips.

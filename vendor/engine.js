@@ -458,29 +458,40 @@ function snippetForItem(it, tokens, esc = (s) => s, settings = SEARCH_SETTINGS) 
   return '';
 }
 
+function itemBodyText(it) {
+  if (!it) return '';
+  if (typeof it.body === 'function') return String(it.body() || '');
+  return String(it.body || '');
+}
+
+/**
+ * Cheap haystack for fast-path gating. MUST include body — otherwise
+ * paragraph-only hits never reach scoreSearchItem (full-text search broken).
+ */
 function textBagForItem(it) {
   const title = String(it.title?.() || '').toLowerCase();
   const sub = String(it.sub || '').toLowerCase();
   const keys = (it.keys || []).join(' ').toLowerCase();
-  return `${title} ${sub} ${keys}`;
+  const body = itemBodyText(it).toLowerCase();
+  return `${title} ${sub} ${keys} ${body}`;
 }
 
-function shouldCandidatePassFastPath(it, tokens, filters) {
+function bagPassesFastPath(bag, tokens, filters) {
   if (!tokens.length) return true;
-  const bag = textBagForItem(it);
+  const hay = String(bag || '');
   for (const excluded of filters?.excluded || []) {
-    if (excluded && bag.includes(excluded)) return false;
+    if (excluded && hay.includes(excluded)) return false;
   }
   for (const required of filters?.required || []) {
     if (!required) continue;
-    if (bag.includes(required)) continue;
-    if (required.length >= 4 && bag.includes(required.slice(0, 4))) continue;
+    if (hay.includes(required)) continue;
+    if (required.length >= 4 && hay.includes(required.slice(0, 4))) continue;
     return false;
   }
   for (const group of filters?.orGroups || []) {
     let ok = false;
     for (const g of group) {
-      if (bag.includes(g)) {
+      if (hay.includes(g)) {
         ok = true;
         break;
       }
@@ -488,6 +499,10 @@ function shouldCandidatePassFastPath(it, tokens, filters) {
     if (!ok) return false;
   }
   return true;
+}
+
+function shouldCandidatePassFastPath(it, tokens, filters) {
+  return bagPassesFastPath(textBagForItem(it), tokens, filters);
 }
 
 function collectTopK(scored, limit) {
@@ -518,12 +533,17 @@ function rankSearchItems(items, q, opts = {}) {
   const tokens = filters.tokens.length ? filters.tokens : tokenizeQuery(q);
   const limit = opts.limit ?? 12;
 
+  // Prefer precomputed bags from buildIndex / createSearchEngine when provided.
+  const indexRows = Array.isArray(opts.index?.items) ? opts.index.items : null;
+  const sourceLen = indexRows ? indexRows.length : items.length;
   const candidates = [];
-  const cap = Math.min(profileCfg.maxCandidates, items.length);
+  const cap = Math.min(profileCfg.maxCandidates, sourceLen);
   for (let i = 0; i < cap; i++) {
-    const it = items[i];
+    const row = indexRows ? indexRows[i] : null;
+    const it = row ? row.it : items[i];
     if (!matchesSearchFilters(it, filters)) continue;
-    if (!shouldCandidatePassFastPath(it, tokens, filters)) continue;
+    const bag = row && typeof row.bag === 'string' ? row.bag : textBagForItem(it);
+    if (!bagPassesFastPath(bag, tokens, filters)) continue;
     candidates.push(it);
   }
 
@@ -537,7 +557,7 @@ function rankSearchItems(items, q, opts = {}) {
   if (typeof opts.onDiagnostics === 'function') {
     opts.onDiagnostics({
       profile: settings.profile,
-      inputCount: items.length,
+      inputCount: sourceLen,
       candidateCount: candidates.length,
       scoredCount: scored.length,
       outputCount: out.length,
@@ -585,6 +605,7 @@ function createSearchEngine(options = {}) {
           profile: runtime.profile || profile,
           settings: { ...settings, ...(runtime.settings || {}) },
           onDiagnostics: runtime.onDiagnostics || options.onDiagnostics,
+          index,
         }
       );
     },

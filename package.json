@@ -1,6 +1,6 @@
 {
   "name": "glyph-so",
-  "version": "2.7.1",
+  "version": "2.7.2",
   "private": true,
   "scripts": {
     "vendor": "node ../glyph-s/scripts/bundle-cjs.mjs"
