@@ -2,19 +2,19 @@
   <a href="https://obsidian.md/"><img src="https://obsidian.md/images/obsidian-logo-gradient.svg" width="72" alt="Obsidian" /></a>
 </p>
 
-<h1 align="center">glyph-sO 2.3</h1>
+<h1 align="center">glyph-sO 2.7</h1>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Obsidian-Plugin-7c3aed" alt="Плагин Obsidian" />
-  <img src="https://img.shields.io/badge/Glyph--S-2.3-green" alt="Glyph-S 2.3" />
-  <img src="https://img.shields.io/badge/версия-2.3.0-blue" alt="версия 2.3.0" />
+  <img src="https://img.shields.io/badge/Glyph--S-2.7-green" alt="Glyph-S 2.7" />
+  <img src="https://img.shields.io/badge/версия-2.7.1-blue" alt="версия 2.7.1" />
   <img src="https://img.shields.io/badge/офлайн-brightgreen" alt="офлайн" />
   <img src="https://img.shields.io/badge/лицензия-GPL--3.0-lightgrey" alt="GPL-3.0" />
 </p>
 
 <p align="center">
   <strong>Полнотекстовый поиск по vault Obsidian</strong> — слова внутри заметок, а не только имена файлов.<br/>
-  Тот же надёжный движок, что у Obsidian, плюс раскладка, транслит, сниппеты и фильтры.
+  Профили Fast / Standard / Deep, раскладка, транслит, сниппеты и фильтры на ядре glyph-s 2.7.
 </p>
 
 <p align="center">
@@ -31,7 +31,15 @@
 
 **glyph-sO** — бесплатный **плагин для [Obsidian](https://obsidian.md/)**. Открывает палитру поиска и находит **любое слово в тексте заметок** — в теле, в заголовках, в `#тегах` и в тегах из YAML в начале файла.
 
-Это часть линейки **Glyph 2.3** (Floke Studio). Работает **без интернета** и **без npm**. [Ollama](https://ollama.com/) для расширения запроса **по умолчанию выключена**.
+Это часть линейки **Glyph 2.7** (Floke Studio). Работает **без интернета** и **без npm**. [Ollama](https://ollama.com/) для расширения запроса **по умолчанию выключена**.
+
+### Что нового в 2.7.1
+
+- Профили в настройках: **Fast / Standard / Deep** (значения `legacy` / `balanced` / `max-quality`) + подсказки.
+- Опция **Show search diagnostics** — в подвале модалки `candidateCount` / `scoredCount` / `elapsedMs`.
+- Подсказка раскладки под полем: *Also showing results for: … (layout fixed)*.
+- Автодополнение `tag:` / `path:` из vault (best-effort, без блокировки UI).
+- Проверка версии вендора при загрузке (`vendor/VERSION.json` ↔ `manifest.glyphEngineVersion`).
 
 Если вы слышите о проекте впервые — начните с раздела **«Установка»**, затем откройте поиск через **иконку 🔍 на ленте** (это всегда работает).
 
@@ -98,16 +106,16 @@
            styles.css
    ```
 
-5. **Настройки → Сторонние плагины** → включить **glyph-sO 2.3**.
+5. **Настройки → Сторонние плагины** → включить **glyph-sO 2.7**.
 6. **Ctrl+R** — перезагрузка, если плагин не виден.
 
-Без `npm`, без `vendor/`.
+Нужны также `services/` и `vendor/` (см. структуру в README.md). Без `npm` для обычной установки из релиза.
 
 #### B) BRAT (обновления с GitHub)
 
 1. Установите плагин **BRAT** из каталога Obsidian.
 2. **BRAT** → **Add Beta plugin** → `FlokeStudio/glyph-sO`
-3. Включить **glyph-sO 2.3** → **Ctrl+R**.
+3. Включить **glyph-sO 2.7** → **Ctrl+R**.
 
 #### C) Git
 
@@ -167,10 +175,15 @@ Obsidian **не всегда** применяет клавиши из маниф
 
 | Параметр | Совет |
 |----------|--------|
+| **Search profile** | **Fast** / **Standard** / **Deep** (`legacy` / `balanced` / `max-quality`) |
+| **Show search diagnostics** | Вкл. — в подвале модалки счётчики и `elapsedMs` |
+| **Compact mode** | Компактные строки результатов (по умолчанию вкл.) |
 | **Match every word** | Вкл. — все слова запроса должны встретиться |
-| **Wrong keyboard layout** | Вкл. — EN/RU раскладка |
+| **Wrong keyboard layout** | Вкл. — EN/RU раскладка + подсказка под полем |
 | **Latin ↔ Cyrillic** | Вкл. — транслит |
 | **Ollama query enrich** | **Выкл.** без рабочей Ollama (иначе 500 и тормоза) |
+
+При наборе `tag:` или `path:` появляются подсказки из vault (не блокируют поиск).
 
 ---
 
@@ -192,9 +205,13 @@ Obsidian **не всегда** применяет клавиши из маниф
 
 Выключить **Ollama query enrich** — для поиска Ollama не нужна.
 
+### Notice про vendor engine ≠ expected
+
+Синхронизируйте вендор из glyph-s: `npm run vendor:sync` (или `bundle:obsidian`) и выровняйте `manifest.glyphEngineVersion` с `vendor/VERSION.json`.
+
 ### Плагин не грузится
 
-Папка строго **`glyph-s-o`**, файлы `manifest.json`, `main.js`, `styles.css` прямо в ней.
+Папка строго **`glyph-s-o`**, файлы `manifest.json`, `main.js`, `styles.css` плюс `services/` и `vendor/` в ней.
 
 ---
 
@@ -210,10 +227,11 @@ Obsidian **не всегда** применяет клавиши из маниф
 
 ## Техническая часть
 
-- **Поиск:** `prepareSimpleSearch` + индекс (имя, путь, теги, заголовки, тело).
-- **Ранжирование:** Glyph-S (раскладка, транслит, контекст).
-- **Индекс:** пакетное чтение, обновление при сохранении файла.
-- **Ядро:** [glyph-s](https://github.com/FlokeStudio/glyph-s).
+- **Поиск:** индекс (имя, путь, теги, заголовки, тело) + ранжирование glyph-s.
+- **Адаптер:** `services/search-engine.js` → `vendor/engine.js`.
+- **Профили:** Fast/Standard/Deep ↔ `legacy`/`balanced`/`max-quality`.
+- **Диагностика:** `onDiagnostics` → опциональный футер модалки.
+- **Синхронизация вендора:** из [glyph-s](https://github.com/FlokeStudio/glyph-s) — `npm run vendor:sync` / `bundle:obsidian` (или `npm run vendor` в этом репо).
 
 Obsidian ≥ 1.5.0 · десктоп и мобильные устройства.
 

@@ -1,0 +1,12 @@
+{
+  "name": "glyph-s",
+  "version": "2.7.1",
+  "stampedAt": "2026-07-19T00:45:14.126Z",
+  "files": [
+    "engine.js",
+    "engine.cjs",
+    "ollama.js",
+    "ollama.cjs",
+    "profiles.json"
+  ]
+}

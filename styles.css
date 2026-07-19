@@ -56,13 +56,85 @@
 
   width: 100%;
 
-  margin-bottom: 0.45em;
+  margin-bottom: 0.25em;
 
   padding: 0.55em 0.7em;
 
   font-size: 1.05em;
 
   border-radius: 8px;
+
+}
+
+
+
+.glyph-so-layout-hint {
+
+  font-size: 0.74em;
+
+  color: var(--text-muted);
+
+  margin: 0 0 0.35em;
+
+  line-height: 1.35;
+
+}
+
+
+
+.glyph-so-layout-hint[hidden],
+
+.glyph-so-suggest[hidden] {
+
+  display: none;
+
+}
+
+
+
+.glyph-so-suggest {
+
+  display: flex;
+
+  flex-wrap: wrap;
+
+  align-items: center;
+
+  gap: 0.25em 0.4em;
+
+  font-size: 0.74em;
+
+  margin: 0 0 0.4em;
+
+}
+
+
+
+.glyph-so-suggest-label {
+
+  opacity: 0.65;
+
+  margin-right: 0.15em;
+
+}
+
+
+
+.glyph-so-suggest-item {
+
+  background: var(--background-modifier-hover);
+
+  border: none;
+
+  border-radius: 4px;
+
+  padding: 0.12em 0.4em;
+
+  cursor: pointer;
+
+  font-size: inherit;
+
+  color: var(--text-accent);
 
 }
 

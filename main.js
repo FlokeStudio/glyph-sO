@@ -464,8 +464,132 @@ const DEFAULT_SETTINGS = {
   searchProfile: 'balanced',
   compactMode: true,
   hideHotkeyHint: false,
+  showSearchDiagnostics: false,
   recentQueries: [],
 };
+
+const PROFILE_LABELS = {
+  legacy: 'Fast',
+  balanced: 'Standard',
+  'max-quality': 'Deep',
+};
+
+function readVendorVersionStamp() {
+  try {
+    return require('./vendor/VERSION.json');
+  } catch (_) {
+    return null;
+  }
+}
+
+function getExpectedEngineVersion(manifest) {
+  if (manifest && manifest.glyphEngineVersion) return String(manifest.glyphEngineVersion);
+  try {
+    const versions = require('./versions.json');
+    if (versions && versions.engine) return String(versions.engine);
+  } catch (_) {
+    /* ignore */
+  }
+  return manifest && manifest.version ? String(manifest.version) : null;
+}
+
+function warnIfVendorEngineMismatch(manifest) {
+  const expected = getExpectedEngineVersion(manifest);
+  const stamp = readVendorVersionStamp();
+  if (!expected || !stamp || stamp.version == null) return;
+  const actual = String(stamp.version);
+  if (actual === String(expected)) return;
+  new Notice(
+    `glyph-sO: vendor engine ${actual} ≠ expected ${expected}. Sync with glyph-s (npm run vendor:sync / bundle:obsidian).`,
+    12000
+  );
+}
+
+function layoutFixedAlternative(q, settings) {
+  if (!settings || settings.fuzzyLayout === false) return null;
+  const raw = String(q || '').trim();
+  if (!raw) return null;
+  const ru = swapKeyboardEnToRu(raw);
+  const en = swapKeyboardRuToEn(raw);
+  const hasCyr = /[а-яё]/i.test(raw);
+  const hasLat = /[a-z]/i.test(raw);
+  if (hasLat && !hasCyr && ru && ru !== raw) return ru;
+  if (hasCyr && !hasLat && en && en !== raw) return en;
+  if (ru && ru !== raw) return ru;
+  if (en && en !== raw) return en;
+  return null;
+}
+
+function collectVaultTagSuggestions(app) {
+  const tags = new Set();
+  try {
+    const cached = app.metadataCache.getTags ? app.metadataCache.getTags() : null;
+    if (cached) {
+      Object.keys(cached).forEach(function (t) {
+        tags.add(String(t).replace(/^#/, ''));
+      });
+    }
+  } catch (_) {
+    /* best-effort */
+  }
+  try {
+    const files = app.vault.getMarkdownFiles();
+    for (let i = 0; i < Math.min(files.length, 400); i++) {
+      const cache = app.metadataCache.getFileCache(files[i]);
+      if (!cache) continue;
+      if (cache.tags) {
+        cache.tags.forEach(function (t) {
+          const tag = String(t.tag || '').replace(/^#/, '');
+          if (tag) tags.add(tag);
+        });
+      }
+      const fm = cache.frontmatter && cache.frontmatter.tags;
+      if (Array.isArray(fm)) {
+        fm.forEach(function (t) {
+          tags.add(String(t).replace(/^#/, ''));
+        });
+      } else if (fm) {
+        tags.add(String(fm).replace(/^#/, ''));
+      }
+    }
+  } catch (_) {
+    /* best-effort */
+  }
+  return Array.from(tags).filter(Boolean).sort();
+}
+
+function collectVaultPathSuggestions(app) {
+  const paths = new Set();
+  try {
+    app.vault.getMarkdownFiles().forEach(function (f) {
+      const parts = String(f.path || '').split('/');
+      let acc = '';
+      for (let i = 0; i < parts.length - 1; i++) {
+        acc = acc ? acc + '/' + parts[i] : parts[i];
+        if (acc) paths.add(acc);
+      }
+    });
+  } catch (_) {
+    /* best-effort */
+  }
+  return Array.from(paths).sort();
+}
+
+function filterAutocomplete(query, tags, paths) {
+  const m = String(query || '').match(/(?:^|\s)(tag|path):([^\s]*)$/i);
+  if (!m) return null;
+  const kind = m[1].toLowerCase();
+  const prefix = String(m[2] || '').toLowerCase();
+  const pool = kind === 'tag' ? tags : paths;
+  const hits = [];
+  for (let i = 0; i < pool.length && hits.length < 8; i++) {
+    const v = pool[i];
+    const low = String(v).toLowerCase();
+    if (!prefix || low.indexOf(prefix) === 0 || low.indexOf(prefix) >= 0) hits.push(v);
+  }
+  if (!hits.length) return null;
+  return { kind: kind, prefix: prefix, hits: hits };
+}
 
 class GlyphSoSettingTab extends PluginSettingTab {
   constructor(app, plugin) {
@@ -529,20 +653,25 @@ class GlyphSoSettingTab extends PluginSettingTab {
           await this.plugin.saveSettings();
         })
       );
-    new Setting(containerEl)
+    const profileSetting = new Setting(containerEl)
       .setName('Search profile')
-      .setDesc('legacy: old behavior, balanced: faster default, max-quality: richer ranking.')
+      .setDesc('Fast (legacy) · Standard (balanced, default) · Deep (max-quality). Values stay legacy/balanced/max-quality.')
       .addDropdown((d) =>
         d
-          .addOption('legacy', 'legacy')
-          .addOption('balanced', 'balanced')
-          .addOption('max-quality', 'max-quality')
+          .addOption('legacy', PROFILE_LABELS.legacy)
+          .addOption('balanced', PROFILE_LABELS.balanced)
+          .addOption('max-quality', PROFILE_LABELS['max-quality'])
           .setValue(this.plugin.settings.searchProfile || 'balanced')
           .onChange(async (v) => {
             this.plugin.settings.searchProfile = v;
             await this.plugin.saveSettings();
           })
       );
+    if (typeof profileSetting.setTooltip === 'function') {
+      profileSetting.setTooltip(
+        'Fast: max compatibility / more candidates. Standard: daily vaults. Deep: richest fuzzy ranking (slower).'
+      );
+    }
     new Setting(containerEl)
       .setName('Compact mode')
       .setDesc('Minimalist result rows for faster scanning.')
@@ -552,6 +681,18 @@ class GlyphSoSettingTab extends PluginSettingTab {
           await this.plugin.saveSettings();
         })
       );
+    const diagSetting = new Setting(containerEl)
+      .setName('Show search diagnostics')
+      .setDesc('When on, the search modal footer shows candidateCount / scoredCount / elapsedMs.')
+      .addToggle((t) =>
+        t.setValue(!!this.plugin.settings.showSearchDiagnostics).onChange(async (v) => {
+          this.plugin.settings.showSearchDiagnostics = v;
+          await this.plugin.saveSettings();
+        })
+      );
+    if (typeof diagSetting.setTooltip === 'function') {
+      diagSetting.setTooltip('Uses the glyph-s onDiagnostics hook from the vendored engine.');
+    }
     new Setting(containerEl)
       .setName('Hotkey hint')
       .setDesc('Ctrl+Shift+G opens Glyph Search. Ctrl+O in Obsidian is Quick Switcher (file names only).')
@@ -653,6 +794,9 @@ class GlyphSearchModal extends Modal {
     this.active = 0;
     this._renderGen = 0;
     this._ollamaEnrichFor = '';
+    this._lastDiagnostics = null;
+    this._tagSuggestions = [];
+    this._pathSuggestions = [];
   }
 
   onOpen() {
@@ -669,6 +813,14 @@ class GlyphSearchModal extends Modal {
         placeholder: 'Слово в заметке, #тег, путь… (как боковой поиск Obsidian + раскладка)',
       },
     });
+    this.layoutHintEl = contentEl.createEl('div', {
+      cls: 'glyph-so-layout-hint',
+      attr: { hidden: 'true' },
+    });
+    this.suggestEl = contentEl.createEl('div', {
+      cls: 'glyph-so-suggest',
+      attr: { hidden: 'true' },
+    });
     this.hintEl = contentEl.createEl('div', {
       cls: 'glyph-so-hint',
       text: 'Загрузка индекса…',
@@ -684,6 +836,15 @@ class GlyphSearchModal extends Modal {
     const self = this;
     this._ready = this.plugin.indexReady;
     this.items = this.plugin.indexItems || [];
+
+    // Best-effort autocomplete pools (do not block open)
+    try {
+      this._tagSuggestions = collectVaultTagSuggestions(this.app);
+      this._pathSuggestions = collectVaultPathSuggestions(this.app);
+    } catch (_) {
+      this._tagSuggestions = [];
+      this._pathSuggestions = [];
+    }
 
     const refreshHint = function () {
       if (!self.hintEl) return;
@@ -713,6 +874,7 @@ class GlyphSearchModal extends Modal {
     let debounce = null;
     this.inputEl.addEventListener('input', function () {
       self.active = 0;
+      self.updateSuggest(self.inputEl.value);
       clearTimeout(debounce);
       debounce = setTimeout(function () {
         self.render(self.inputEl.value);
@@ -739,6 +901,70 @@ class GlyphSearchModal extends Modal {
     });
   }
 
+  updateFooter() {
+    if (!this.footerEl) return;
+    const base = '↑↓ · ↵ открыть · Ctrl+↵ вкладка · path:Journal · tag:утро · Esc';
+    const d = this._lastDiagnostics;
+    if (this.plugin.settings.showSearchDiagnostics && d) {
+      this.footerEl.setText(
+        base +
+          ' · candidates ' +
+          d.candidateCount +
+          ' · scored ' +
+          d.scoredCount +
+          ' · ' +
+          d.elapsedMs +
+          'ms'
+      );
+    } else {
+      this.footerEl.setText(base);
+    }
+  }
+
+  updateLayoutHint(query) {
+    if (!this.layoutHintEl) return;
+    const alt = layoutFixedAlternative(query, this.plugin.settings);
+    if (alt) {
+      this.layoutHintEl.removeAttribute('hidden');
+      this.layoutHintEl.setText('Also showing results for: ' + alt + ' (layout fixed)');
+    } else {
+      this.layoutHintEl.setAttribute('hidden', 'true');
+      this.layoutHintEl.setText('');
+    }
+  }
+
+  updateSuggest(query) {
+    if (!this.suggestEl) return;
+    const ac = filterAutocomplete(query, this._tagSuggestions, this._pathSuggestions);
+    this.suggestEl.empty();
+    if (!ac || !ac.hits.length) {
+      this.suggestEl.setAttribute('hidden', 'true');
+      return;
+    }
+    this.suggestEl.removeAttribute('hidden');
+    const self = this;
+    const label = this.suggestEl.createEl('span', {
+      cls: 'glyph-so-suggest-label',
+      text: ac.kind + ':',
+    });
+    ac.hits.forEach(function (hit) {
+      const btn = self.suggestEl.createEl('button', {
+        cls: 'glyph-so-suggest-item',
+        text: hit,
+      });
+      btn.addEventListener('mousedown', function (e) {
+        e.preventDefault();
+        const cur = String(self.inputEl.value || '');
+        const next = cur.replace(/(tag|path):([^\s]*)$/i, ac.kind + ':' + hit);
+        self.inputEl.value = next;
+        self.updateSuggest(next);
+        self.render(next);
+        self.inputEl.focus();
+      });
+    });
+    void label;
+  }
+
   renderTips() {
     if (!this.tipsEl) return;
     this.tipsEl.empty();
@@ -754,6 +980,7 @@ class GlyphSearchModal extends Modal {
       const b = self.tipsEl.createEl('button', { cls: 'glyph-so-recent', text: rq });
       b.addEventListener('click', function () {
         self.inputEl.value = rq;
+        self.updateSuggest(rq);
         self.render(rq);
       });
     });
@@ -772,10 +999,13 @@ class GlyphSearchModal extends Modal {
       this.listEl.empty();
       this.listEl.createEl('div', { text: 'Индексируем заметки…', cls: 'glyph-so-empty' });
       if (this.countEl) this.countEl.setText('');
+      this.updateLayoutHint('');
+      this.updateFooter();
       return;
     }
     this.items = this.plugin.indexItems;
     let query = normalizeQuery(q);
+    this.updateLayoutHint(query);
     if (this.plugin.settings.useOllamaEnrich && query.length > 2 && this._ollamaEnrichFor === query) {
       const ok = await ollamaAvailable({ ollamaUrl: this.plugin.settings.ollamaUrl });
       if (ok) {
@@ -796,13 +1026,13 @@ class GlyphSearchModal extends Modal {
     }
     if (gen !== this._renderGen) return;
 
-    const active = this.app.workspace.getActiveFile();
     this._ranked = rankGlyphResults(this.items, query, this.plugin.settings, {
       limit: 40,
       onDiagnostics: (d) => {
         this._lastDiagnostics = d;
       },
     });
+    this.updateFooter();
     this.listEl.empty();
     const self = this;
     const trimmed = normalizeQuery(query);
@@ -855,6 +1085,8 @@ class GlyphSoPlugin extends Plugin {
     this.indexItems = [];
     this.indexReady = false;
     this._indexPromise = null;
+
+    warnIfVendorEngineMismatch(this.manifest);
 
     this.addSettingTab(new GlyphSoSettingTab(this.app, this));
     this.addRibbonIcon('search', 'Glyph Search (полный текст)', () => this.openSearch());

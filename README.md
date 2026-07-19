@@ -33,15 +33,25 @@ The plugin is part of the **Glyph 2.7** family and runs on the shared [`glyph-s`
 | Query filters | Limited | `path:`, `tag:`, phrases, OR, excludes |
 | Offline | Yes | Yes (Ollama optional) |
 
-### What’s new in 2.7
+### What’s new in 2.7.1
 
-**Search profiles** — tune the balance between speed and depth:
+**Clearer profiles** — settings show **Fast / Standard / Deep** (stored values remain `legacy` / `balanced` / `max-quality`) with tooltips.
 
-| Profile | Best for |
-|---------|----------|
-| `legacy` | Maximum compatibility with pre-2.7 behavior |
-| `balanced` | Default — good speed and relevance for daily vaults |
-| `max-quality` | Deeper fuzzy matching, more candidates scanned |
+**Search diagnostics** — optional toggle shows `candidateCount` / `scoredCount` / `elapsedMs` in the modal footer (via glyph-s `onDiagnostics`).
+
+**Layout-fix hint** — when EN↔RU keyboard correction applies, a line under the input shows *Also showing results for: … (layout fixed)*.
+
+**Filter autocomplete** — best-effort `tag:` / `path:` suggestions from the vault (non-blocking).
+
+**Vendor version check** — on load, compares `vendor/VERSION.json` to `manifest.glyphEngineVersion` and warns with a Notice if they differ.
+
+### Search profiles (2.7)
+
+| Label (UI) | Value | Best for |
+|------------|-------|----------|
+| Fast | `legacy` | Maximum compatibility with pre-2.7 behavior |
+| Standard | `balanced` | Default — good speed and relevance for daily vaults |
+| Deep | `max-quality` | Deeper fuzzy matching, more candidates scanned |
 
 **Extended query grammar** — compose precise searches:
 
@@ -53,11 +63,9 @@ tag:evergreen                 → filter by tag
 path: journal tag:daily       → combine filters
 ```
 
-**Modular architecture** — search logic moved to `services/search-engine.js`, powered by the vendored `glyph-s` 2.7 engine. Easier updates and consistent ranking with other Glyph products.
+**Modular architecture** — search logic in `services/search-engine.js`, powered by the vendored `glyph-s` engine. Easier updates and consistent ranking with other Glyph products.
 
 **Compact mode** — minimalist panel spacing (enabled by default). Toggle in Settings → Compact mode.
-
-**Cached ranking path** — token-variant expansion and snippet generation use the engine’s 2.7 caches for smoother scrolling through large result sets.
 
 ### Install
 
@@ -72,7 +80,8 @@ path: journal tag:daily       → combine filters
 ├── services/
 │   └── search-engine.js
 └── vendor/
-    └── engine.js
+    ├── engine.js
+    └── VERSION.json
 ```
 
 3. Enable **glyph-sO** in **Settings → Community plugins**.
@@ -85,6 +94,7 @@ path: journal tag:daily       → combine filters
 | Navigate results | ↑ ↓ arrow keys |
 | Open note at match | Enter |
 | Recent queries | Shown when the input is empty |
+| `tag:` / `path:` | Type the prefix for vault suggestions |
 
 **Tip:** Obsidian’s Ctrl+O finds files by name. Use glyph-sO when you remember *what* you wrote, not *where* you saved it.
 
@@ -92,10 +102,11 @@ path: journal tag:daily       → combine filters
 
 | Setting | Description |
 |---------|-------------|
-| **Search profile** | `legacy` / `balanced` / `max-quality` |
+| **Search profile** | **Fast** / **Standard** / **Deep** (`legacy` / `balanced` / `max-quality`) |
 | **Compact mode** | Minimalist result panel (default: on) |
+| **Show search diagnostics** | Footer shows candidate/scored counts and elapsed ms |
 | **Match all words** | Require every token to match (AND vs OR) |
-| **Fuzzy layout** | EN↔RU keyboard layout correction |
+| **Fuzzy layout** | EN↔RU keyboard layout correction (+ under-input hint) |
 | **Fuzzy transliteration** | Rough Latin↔Cyrillic matching |
 | **Ollama query enrich** | Optional local LLM query expansion |
 | **Hide hotkey hint** | Remove shortcut hint from the modal |
@@ -113,20 +124,21 @@ For summaries and tag suggestions on the active note, install [**glyph-miO**](ht
 ```
 main.js                    # Obsidian plugin entry, UI, vault indexing
 services/search-engine.js  # Adapter: settings → glyph-s rankSearchItems
-vendor/engine.js           # Bundled glyph-s 2.7 (CJS)
+vendor/engine.js           # Bundled glyph-s (CJS)
+vendor/VERSION.json        # Stamp from glyph-s vendor:sync
 styles.css                 # Panel styles incl. .glyph-so-compact
 ```
 
-The plugin builds a search index from vault markdown files and passes items to `rankGlyphResults()` with the user’s profile and fuzzy settings.
+The plugin builds a search index from vault markdown files and passes items to `rankGlyphResults()` with the user’s profile and fuzzy settings. On load it compares `vendor/VERSION.json` to `manifest.glyphEngineVersion`.
 
 ### Refresh vendor bundle
 
-When `glyph-s` is updated, rebuild the Obsidian CJS bundle and copy it:
+When `glyph-s` is updated, sync the Obsidian CJS vendor (writes `engine.js`, `ollama.js`, `profiles.json`, and `VERSION.json`):
 
 ```bash
 cd ../glyph-s
-npm run bundle:obsidian
-cp dist/glyph-search-cjs.js ../glyph-sO/vendor/engine.js
+npm run vendor:sync
+# equivalent: npm run bundle:obsidian
 ```
 
 Or from this repo:
@@ -135,6 +147,8 @@ Or from this repo:
 npm run vendor
 ```
 
+Keep `manifest.glyphEngineVersion` aligned with the stamped `vendor/VERSION.json` `version` field after syncing.
+
 ### Project layout
 
 | Path | Role |
@@ -142,6 +156,7 @@ npm run vendor
 | `main.js` | Plugin class, modal, settings tab, index builder |
 | `services/search-engine.js` | `rankGlyphResults`, `queryAlternatives` |
 | `vendor/engine.js` | `rankSearchItems`, `snippetForItem`, `parseSearchQuery` |
+| `vendor/VERSION.json` | Engine version stamp for runtime mismatch Notice |
 | `.github/workflows/release.yml` | Packages `services/` + `vendor/` into release zip |
 | `.github/workflows/pages.yml` | Deploys `docs/` to GitHub Pages |
 
