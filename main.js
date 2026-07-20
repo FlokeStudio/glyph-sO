@@ -914,7 +914,7 @@ class GlyphSearchModal extends Modal {
       const match = findFirstMatchOffset(editor, query, settings);
       if (match) {
         editor.setSelection(match.from, match.to);
-        editor.scrollIntoView(match.from, match.to);
+        editor.scrollIntoView({ from: match.from, to: match.to });
       }
     });
     this.close();
