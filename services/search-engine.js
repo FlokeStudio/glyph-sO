@@ -5,7 +5,6 @@ const {
   expandQueryVariants,
 } = require('../vendor/engine.js');
 
-/** Parse engine `<mark>…</mark>` into plain text + match offsets for UI highlight. */
 function markToOffsets(html) {
   const raw = String(html || '');
   const i = raw.indexOf('<mark>');

@@ -2,7 +2,7 @@
   <a href="https://obsidian.md/"><img src="https://obsidian.md/images/obsidian-logo-gradient.svg" width="72" alt="Obsidian" /></a>
 </p>
 
-<h1 align="center">glyph-sO 2.7</h1>
+<h1 align="center">glyph-sO 2.8</h1>
 
 <p align="center">
   <strong>Full-text vault search for Obsidian</strong><br>
@@ -25,7 +25,7 @@
 
 **glyph-sO** is an Obsidian community plugin for **full-text search** across your vault. Unlike Obsidian’s built-in quick switcher (Ctrl+O), which matches file names only, glyph-sO indexes note content and ranks results with contextual snippets — so you can find ideas buried inside paragraphs.
 
-The plugin is part of the **Glyph 2.7** family and runs on the shared [`glyph-s`](https://github.com/FlokeStudio/glyph-s) search engine.
+The plugin is part of the **Glyph 2.8** family and runs on the shared [`glyph-s`](https://github.com/FlokeStudio/glyph-s) search engine.
 
 | | Obsidian quick switcher | glyph-sO |
 |---|------------------------|----------|
@@ -33,6 +33,16 @@ The plugin is part of the **Glyph 2.7** family and runs on the shared [`glyph-s`
 | Snippets | No | Yes — jump to the match |
 | Query filters | Limited | `path:`, `tag:`, phrases, OR, excludes |
 | Offline | Yes | Yes (Ollama optional) |
+
+### What’s new in 2.8.0
+
+**Editor highlight** — Enter opens the note and selects the first match for your query token, scrolled into view.
+
+**Search stats** — results header/footer show N results in M notes · X ms (M = indexed vault size).
+
+**Hover preview** — extended snippet context on row hover (tooltip + floating preview).
+
+**Folder grouping** — optional folder headers in the results list (Settings → Group results by folder).
 
 ### What’s new in 2.7.3
 
@@ -119,6 +129,7 @@ path: journal tag:daily       → combine filters
 |---------|-------------|
 | **Search profile** | **Fast** / **Standard** / **Deep** (`legacy` / `balanced` / `max-quality`) |
 | **Compact mode** | Minimalist result panel (default: on) |
+| **Group results by folder** | Folder headers in results list (default: off) |
 | **Show search diagnostics** | Footer shows candidate/scored counts and elapsed ms |
 | **Match all words** | Require every token to match (AND vs OR) |
 | **Fuzzy layout** | EN↔RU keyboard layout correction (+ under-input hint) |
@@ -134,11 +145,12 @@ For summaries and tag suggestions on the active note, install [**glyph-miO**](ht
 
 ## GitHub / Dev section
 
-### Architecture (2.7)
+### Architecture (2.8)
 
 ```
 main.js                    # Obsidian plugin entry, UI, vault indexing
 services/search-engine.js  # Adapter: settings → glyph-s rankSearchItems
+services/search-ui.js      # Stats, folder groups, editor match offset
 vendor/engine.js           # Bundled glyph-s (CJS)
 vendor/VERSION.json        # Stamp from glyph-s vendor:sync
 styles.css                 # Panel styles incl. .glyph-so-compact
@@ -169,6 +181,7 @@ Keep `manifest.glyphEngineVersion` aligned with the stamped `vendor/VERSION.json
 | Path | Role |
 |------|------|
 | `main.js` | Plugin class, modal, settings tab, index builder |
+| `services/search-ui.js` | `groupResultsByFolder`, `formatSearchStats`, `findFirstMatchOffset` |
 | `services/search-engine.js` | `rankGlyphResults`, `queryAlternatives` |
 | `vendor/engine.js` | `rankSearchItems`, `snippetForItem`, `parseSearchQuery` |
 | `vendor/VERSION.json` | Engine version stamp for runtime mismatch Notice |

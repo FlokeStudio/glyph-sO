@@ -1,9 +1,15 @@
 {
   "name": "glyph-so",
-  "version": "2.7.3",
+  "version": "2.8.0",
   "private": true,
   "scripts": {
-    "vendor": "node ../glyph-s/scripts/bundle-cjs.mjs"
+    "vendor": "node ../glyph-s/scripts/bundle-cjs.mjs",
+    "test": "vitest run",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "eslint": "^9.28.0",
+    "vitest": "^3.2.4"
   },
   "license": "GPL-3.0-or-later"
 }

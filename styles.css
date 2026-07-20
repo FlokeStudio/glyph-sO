@@ -318,3 +318,67 @@
 
 }
 
+
+
+.glyph-so-folder {
+
+  font-size: 0.78em;
+
+  font-weight: 600;
+
+  color: var(--text-muted);
+
+  padding: 0.45em 0.45em 0.2em;
+
+  margin-top: 0.25em;
+
+  border-bottom: 1px solid var(--background-modifier-border);
+
+}
+
+
+
+.glyph-so-row {
+
+  position: relative;
+
+}
+
+
+
+.glyph-so-hover {
+
+  position: absolute;
+
+  left: 0.45em;
+
+  right: 0.45em;
+
+  bottom: calc(100% + 0.25em);
+
+  z-index: 10;
+
+  padding: 0.45em 0.55em;
+
+  font-size: 0.76em;
+
+  line-height: 1.4;
+
+  color: var(--text-normal);
+
+  background: var(--background-primary);
+
+  border: 1px solid var(--background-modifier-border);
+
+  border-radius: 6px;
+
+  box-shadow: 0 2px 8px var(--background-modifier-box-shadow);
+
+  pointer-events: none;
+
+  max-height: 8em;
+
+  overflow: hidden;
+
+}
+

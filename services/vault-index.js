@@ -1,5 +1,3 @@
-/** Persistent vault index cache (plugin dir index-cache.json). */
-
 const INDEX_CACHE_VERSION = 1;
 
 function serializeEntry(item) {

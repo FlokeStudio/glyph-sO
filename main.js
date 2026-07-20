@@ -12,6 +12,12 @@ const {
   saveIndexCache,
   entriesMapFromItems,
 } = require('./services/vault-index');
+const {
+  groupResultsByFolder,
+  formatSearchStats,
+  findFirstMatchOffset,
+  extendedSnippet,
+} = require('./services/search-ui');
 
 const DEFAULT_OLLAMA_URL = 'http://127.0.0.1:11434';
 const DEFAULT_OLLAMA_MODEL = 'llama3.2';
@@ -139,6 +145,7 @@ const DEFAULT_SETTINGS = {
   hideHotkeyHint: false,
   showSearchDiagnostics: false,
   persistIndex: true,
+  groupByFolder: false,
   recentQueries: [],
 };
 
@@ -162,7 +169,7 @@ function getExpectedEngineVersion(manifest) {
     const versions = require('./versions.json');
     if (versions && versions.engine) return String(versions.engine);
   } catch (_) {
-    /* ignore */
+    return null;
   }
   return manifest && manifest.version ? String(manifest.version) : null;
 }
@@ -204,7 +211,7 @@ function collectVaultTagSuggestions(app) {
       });
     }
   } catch (_) {
-    /* best-effort */
+    void _;
   }
   try {
     const files = app.vault.getMarkdownFiles();
@@ -227,7 +234,7 @@ function collectVaultTagSuggestions(app) {
       }
     }
   } catch (_) {
-    /* best-effort */
+    void _;
   }
   return Array.from(tags).filter(Boolean).sort();
 }
@@ -244,7 +251,7 @@ function collectVaultPathSuggestions(app) {
       }
     });
   } catch (_) {
-    /* best-effort */
+    void _;
   }
   return Array.from(paths).sort();
 }
@@ -274,7 +281,7 @@ class GlyphSoSettingTab extends PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl('h2', { text: 'Glyph Search-O 2.7' });
+    containerEl.createEl('h2', { text: 'Glyph Search-O 2.8' });
     new Setting(containerEl)
       .setName('Ollama query enrich (-On)')
       .setDesc('Optional: expand search query via local LLM.')
@@ -355,6 +362,15 @@ class GlyphSoSettingTab extends PluginSettingTab {
           await this.plugin.saveSettings();
         })
       );
+    new Setting(containerEl)
+      .setName('Group results by folder')
+      .setDesc('Show folder headers in the results list.')
+      .addToggle((t) =>
+        t.setValue(!!this.plugin.settings.groupByFolder).onChange(async (v) => {
+          this.plugin.settings.groupByFolder = v;
+          await this.plugin.saveSettings();
+        })
+      );
     const diagSetting = new Setting(containerEl)
       .setName('Show search diagnostics')
       .setDesc('When on, the search modal footer shows candidateCount / scoredCount / elapsedMs.')
@@ -408,6 +424,23 @@ function renderHighlightedSnippet(parent, sn) {
   wrap.createSpan({ text: before });
   wrap.createEl('mark', { cls: 'glyph-so-mark', text: hit });
   wrap.createSpan({ text: after });
+}
+
+function attachHoverPreview(rowEl, row) {
+  const preview = extendedSnippet(row);
+  if (!preview) return;
+  rowEl.setAttr('title', preview);
+  let hoverEl = null;
+  rowEl.addEventListener('mouseenter', function () {
+    if (preview.length < 48) return;
+    hoverEl = rowEl.createEl('div', { cls: 'glyph-so-hover', text: preview });
+  });
+  rowEl.addEventListener('mouseleave', function () {
+    if (hoverEl) {
+      hoverEl.remove();
+      hoverEl = null;
+    }
+  });
 }
 
 function indexOneFile(app, f) {
@@ -495,7 +528,7 @@ async function buildVaultIndex(app, plugin) {
     try {
       await saveIndexCache(plugin, entriesMapFromItems(items));
     } catch (e) {
-      /* non-fatal */
+      void e;
     }
   }
   return items;
@@ -509,6 +542,7 @@ class GlyphSearchModal extends Modal {
     this._renderGen = 0;
     this._ollamaEnrichFor = '';
     this._lastDiagnostics = null;
+    this._lastQuery = '';
     this._tagSuggestions = [];
     this._pathSuggestions = [];
   }
@@ -551,7 +585,6 @@ class GlyphSearchModal extends Modal {
     this._ready = this.plugin.indexReady;
     this.items = this.plugin.indexItems || [];
 
-    // Best-effort autocomplete pools (do not block open)
     try {
       this._tagSuggestions = collectVaultTagSuggestions(this.app);
       this._pathSuggestions = collectVaultPathSuggestions(this.app);
@@ -619,6 +652,28 @@ class GlyphSearchModal extends Modal {
     if (!this.footerEl) return;
     const base = '↑↓ · ↵ открыть · Ctrl+↵ вкладка · path:Journal · tag:утро · Esc';
     const d = this._lastDiagnostics;
+    const trimmed = normalizeQuery(this._lastQuery);
+    if (trimmed && d) {
+      const stats = formatSearchStats(
+        this._ranked,
+        this.items.length,
+        d.elapsedMs,
+        d
+      );
+      let text = stats + ' · ' + base;
+      if (this.plugin.settings.showSearchDiagnostics) {
+        text =
+          stats +
+          ' · candidates ' +
+          d.candidateCount +
+          ' · scored ' +
+          d.scoredCount +
+          ' · ' +
+          base;
+      }
+      this.footerEl.setText(text);
+      return;
+    }
     if (this.plugin.settings.showSearchDiagnostics && d) {
       this.footerEl.setText(
         base +
@@ -707,6 +762,21 @@ class GlyphSearchModal extends Modal {
     }
   }
 
+  renderResultRow(row, rowIndex) {
+    const self = this;
+    const it = row.it;
+    const el = self.listEl.createEl('div', { cls: 'glyph-so-row' });
+    if (rowIndex === self.active) el.addClass('is-active');
+    el.createEl('div', { cls: 'glyph-so-title', text: it.title() });
+    el.createEl('div', { cls: 'glyph-so-sub', text: it.sub });
+    if (row.snippet && row.snippet.text) renderHighlightedSnippet(el, row.snippet);
+    attachHoverPreview(el, row);
+    el.addEventListener('click', function () {
+      self.openItem(it, false);
+    });
+    return el;
+  }
+
   async render(q) {
     const gen = ++this._renderGen;
     if (!this._ready && !this.plugin.indexReady) {
@@ -746,25 +816,35 @@ class GlyphSearchModal extends Modal {
         this._lastDiagnostics = d;
       },
     });
+    const trimmed = normalizeQuery(query);
+    this._lastQuery = trimmed;
     this.updateFooter();
     this.listEl.empty();
     const self = this;
-    const trimmed = normalizeQuery(query);
     if (trimmed && this.plugin.rememberQuery) this.plugin.rememberQuery(trimmed);
 
     if (this.countEl) {
-      this.countEl.setText(trimmed ? 'Найдено: ' + this._ranked.length : '');
+      const stats = formatSearchStats(
+        this._ranked,
+        this.items.length,
+        this._lastDiagnostics && this._lastDiagnostics.elapsedMs,
+        this._lastDiagnostics
+      );
+      this.countEl.setText(trimmed ? stats : '');
     }
 
-    this._ranked.forEach(function (row, i) {
-      const it = row.it;
-      const el = self.listEl.createEl('div', { cls: 'glyph-so-row' });
-      if (i === self.active) el.addClass('is-active');
-      el.createEl('div', { cls: 'glyph-so-title', text: it.title() });
-      el.createEl('div', { cls: 'glyph-so-sub', text: it.sub });
-      if (row.snippet && row.snippet.text) renderHighlightedSnippet(el, row.snippet);
-      el.addEventListener('click', function () {
-        self.openItem(it, false);
+    const grouped = this.plugin.settings.groupByFolder
+      ? groupResultsByFolder(this._ranked)
+      : [{ folder: '', rows: this._ranked }];
+    let rowIndex = 0;
+    grouped.forEach(function (group) {
+      if (self.plugin.settings.groupByFolder) {
+        const label = group.folder || '(root)';
+        self.listEl.createEl('div', { cls: 'glyph-so-folder', text: '📁 ' + label });
+      }
+      group.rows.forEach(function (row) {
+        self.renderResultRow(row, rowIndex);
+        rowIndex++;
       });
     });
 
@@ -787,8 +867,20 @@ class GlyphSearchModal extends Modal {
   }
 
   openItem(it, newTab) {
+    const query = this._lastQuery || '';
+    const settings = this.plugin.settings;
     const leaf = newTab ? this.app.workspace.getLeaf('tab') : this.app.workspace.getLeaf(false);
-    leaf.openFile(it.file);
+    const self = this;
+    leaf.openFile(it.file).then(function () {
+      const view = leaf.view;
+      const editor = view && view.editor;
+      if (!editor) return;
+      const match = findFirstMatchOffset(editor, query, settings);
+      if (match) {
+        editor.setSelection(match.from, match.to);
+        editor.scrollIntoView(match.from, match.to);
+      }
+    });
     this.close();
   }
 }

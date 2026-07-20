@@ -1,7 +1,7 @@
 {
   "id": "glyph-s-o",
-  "name": "glyph-sO 2.7",
-  "version": "2.7.3",
+  "name": "glyph-sO 2.8",
+  "version": "2.8.0",
   "minAppVersion": "1.5.0",
   "glyphEngineVersion": "2.7.2",
   "description": "Full-text vault search for Obsidian with persistent index, profiles, snippets, layout fix and transliteration.",
