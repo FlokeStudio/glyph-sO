@@ -529,7 +529,7 @@ async function buildVaultIndex(app, plugin) {
     try {
       await saveIndexCache(plugin, entriesMapFromItems(items));
     } catch {
-      void e;
+      /* ignore */
     }
   }
   return items;
