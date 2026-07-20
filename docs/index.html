@@ -1,200 +1,400 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>glyph-sO 2.8 — Search for Obsidian</title>
-  <meta name="description" content="Full-text vault search for Obsidian with profile-based ranking, extended query grammar, and offline-first performance.">
-  <style>
-    :root {
-      color-scheme: dark;
-      --bg: #0d0f12;
-      --bg-elevated: #14181e;
-      --bg-card: #181c24;
-      --border: #2a313c;
-      --text: #e8eaed;
-      --muted: #9aa3b2;
-      --accent: #3dd6c6;
-      --accent-dim: rgba(61, 214, 198, 0.12);
-      --warm: #e8b86d;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: Inter, "Segoe UI", system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.6;
-    }
-    a { color: var(--accent); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    .nav {
-      display: flex; justify-content: space-between; align-items: center;
-      max-width: 1080px; margin: 0 auto; padding: 20px 24px;
-    }
-    .nav-links { display: flex; gap: 20px; font-size: 14px; }
-    .nav-links a { color: var(--muted); }
-    .hero {
-      text-align: center; padding: 72px 24px 56px;
-      background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(61,214,198,0.08), transparent);
-    }
-    .hero-brand { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 28px; }
-    .hero-brand img { width: 64px; height: 64px; }
-    .hero-brand span { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
-    .hero h1 { font-size: clamp(2.2rem, 5vw, 3.4rem); font-weight: 700; margin: 0 0 16px; letter-spacing: -0.02em; }
-    .hero .lead { max-width: 640px; margin: 0 auto 32px; font-size: 1.15rem; color: var(--muted); }
-    .cta-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
-    .btn {
-      display: inline-block; padding: 12px 22px; border-radius: 10px; font-weight: 600; font-size: 15px;
-      border: 1px solid var(--border); transition: background 0.15s;
-    }
-    .btn-primary { background: var(--accent); color: #0d0f12; border-color: var(--accent); }
-    .btn-primary:hover { background: #4ee8d8; text-decoration: none; }
-    .btn-secondary { background: var(--bg-card); color: var(--text); }
-    .btn-secondary:hover { background: var(--bg-elevated); text-decoration: none; }
-    .section { max-width: 1080px; margin: 0 auto; padding: 56px 24px; }
-    .section h2 { font-size: 1.75rem; margin: 0 0 12px; letter-spacing: -0.02em; }
-    .section .sub { color: var(--muted); margin: 0 0 32px; max-width: 680px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
-    .card {
-      background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 28px;
-    }
-    .card h3 { margin: 0 0 8px; font-size: 1.1rem; }
-    .card p { margin: 0; color: var(--muted); font-size: 0.95rem; }
-    .badge-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
-    .badge {
-      font-size: 12px; padding: 5px 10px; border-radius: 999px;
-      background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(61,214,198,0.25);
-    }
-    .highlight {
-      background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 16px;
-      padding: 32px; margin-top: 24px;
-    }
-    .highlight h3 { margin: 0 0 16px; color: var(--warm); font-size: 1rem; text-transform: uppercase; letter-spacing: 0.06em; }
-    .highlight ul { margin: 0; padding-left: 20px; color: var(--muted); }
-    .highlight li { margin-bottom: 8px; }
-    code {
-      font-family: "Cascadia Code", Consolas, monospace; font-size: 0.88em;
-      background: rgba(0,0,0,0.35); padding: 2px 6px; border-radius: 4px;
-    }
-    .family { text-align: center; padding: 48px 24px 72px; border-top: 1px solid var(--border); }
-    .family p { color: var(--muted); margin-bottom: 16px; }
-    .family-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
-    .family-links a {
-      color: var(--text); border: 1px solid var(--border); padding: 8px 16px; border-radius: 8px; font-size: 14px;
-    }
-    .family-links a:hover { border-color: var(--accent); text-decoration: none; }
-    footer { text-align: center; padding: 24px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--border); }
-  </style>
-</head>
-<body>
-  <nav class="nav">
-    <strong>glyph-sO</strong>
-    <div class="nav-links">
-      <a href="https://github.com/FlokeStudio/glyph-sO">GitHub</a>
-      <a href="https://github.com/FlokeStudio/glyph-sO#user-section">Docs</a>
-      <a href="https://github.com/FlokeStudio/glyph-miO">glyph-miO</a>
-    </div>
-  </nav>
-
-  <header class="hero">
-    <div class="hero-brand">
-      <img src="https://obsidian.md/images/obsidian-logo-gradient.svg" alt="Obsidian">
-      <span>Obsidian Plugin</span>
-    </div>
-    <h1>Search your vault.<br>Find anything, fast.</h1>
-    <p class="lead">glyph-sO brings full-text search to Obsidian with keyboard-first navigation, smart ranking profiles, and an extended query language — all offline by default.</p>
-    <div class="cta-row">
-      <a class="btn btn-primary" href="https://github.com/FlokeStudio/glyph-sO">Get 2.8.0 (main)</a>
-      <a class="btn btn-secondary" href="https://github.com/FlokeStudio/glyph-sO/blob/main/README.md">Read the docs</a>
-    </div>
-  </header>
-
-  <section class="section">
-    <h2>What's new in 2.8.0</h2>
-    <p class="sub">Editor highlight on open, search stats, hover previews, and optional folder grouping — built on the persistent index from 2.7.3.</p>
-    <div class="grid">
-      <article class="card">
-        <h3>Editor highlight</h3>
-        <p>Open a result and jump straight to the first query match — selected and scrolled into view in the editor.</p>
-      </article>
-      <article class="card">
-        <h3>Search stats</h3>
-        <p>See <code>N results in M notes · X ms</code> in the modal header while you search.</p>
-      </article>
-      <article class="card">
-        <h3>Hover preview</h3>
-        <p>Extended snippet context on row hover — tooltip plus a floating preview panel.</p>
-      </article>
-      <article class="card">
-        <h3>Folder grouping</h3>
-        <p>Toggle folder headers in the results list when your vault is organized by directories.</p>
-        <div class="badge-row"><span class="badge">Settings → Group results by folder</span></div>
-      </article>
-      <article class="card">
-        <h3>Persistent index</h3>
-        <p><code>index-cache.json</code> in the plugin folder — reload skips unchanged files (from 2.7.3).</p>
-      </article>
-      <article class="card">
-        <h3>Search profiles</h3>
-        <p>Choose how the engine balances speed and precision: <code>legacy</code>, <code>balanced</code>, or <code>max-quality</code>.</p>
-      </article>
-    </div>
-    <div class="highlight">
-      <h3>Query examples</h3>
-      <ul>
-        <li><code>path:projects/</code> — notes under a folder</li>
-        <li><code>tag:evergreen</code> — filter by tag</li>
-        <li><code>"meeting notes" -archive</code> — phrase match, exclude archive</li>
-        <li><code>(idea OR draft) type:note</code> — OR group with type filter</li>
-      </ul>
-    </div>
-  </section>
-
-  <section class="section">
-    <h2>Built for how you think</h2>
-    <p class="sub">Obsidian's built-in quick switcher finds file names. glyph-sO searches inside your notes.</p>
-    <div class="grid">
-      <article class="card">
-        <h3>Keyboard-first</h3>
-        <p>Open search from the ribbon or assign a hotkey. Arrow keys navigate results; Enter opens the note at the matching snippet.</p>
-      </article>
-      <article class="card">
-        <h3>Layout &amp; transliteration</h3>
-        <p>Automatic EN↔RU keyboard layout fixes and rough Latin↔Cyrillic transliteration help when you type in the wrong layout.</p>
-      </article>
-      <article class="card">
-        <h3>Snippet previews</h3>
-        <p>See the matching passage before you jump. Cached snippet generation keeps scrolling through results smooth.</p>
-      </article>
-      <article class="card">
-        <h3>Offline-first</h3>
-        <p>Everything runs locally in your vault. Optional Ollama enrichment can expand queries when a local model is available.</p>
-      </article>
-    </div>
-  </section>
-
-  <section class="section">
-    <h2>Install</h2>
-    <p class="sub">Copy the release zip into your vault's plugin folder and enable in Settings → Community plugins.</p>
-    <div class="highlight">
-      <ul>
-        <li>Folder: <code>.obsidian/plugins/glyph-s-o/</code></li>
-        <li>Files: <code>manifest.json</code>, <code>main.js</code>, <code>styles.css</code>, <code>services/</code>, <code>vendor/</code></li>
-        <li>Open via ribbon 🔍 or command palette: <strong>Glyph: search vault</strong></li>
-      </ul>
-    </div>
-  </section>
-
-  <div class="family">
-    <p>Part of the Glyph 2.8 family</p>
-    <div class="family-links">
-      <a href="https://flokestudio.github.io/glyph-s/">glyph-s engine</a>
-      <a href="https://flokestudio.github.io/glyph-miO/">glyph-miO</a>
-      <a href="https://krwg.github.io/glyph-mi/">glyph-mi core</a>
-    </div>
-  </div>
-
-  <footer>GPL-3.0 · Floke Studio · glyph-sO 2.8</footer>
-</body>
-</html>
+<!doctype html>
+
+<html lang="en">
+
+<head>
+
+  <meta charset="utf-8">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>glyph-sO 2.8 — Search for Obsidian</title>
+
+  <meta name="description" content="Full-text vault search for Obsidian with profile-based ranking, extended query grammar, and offline-first performance.">
+
+  <style>
+
+    :root {
+
+      color-scheme: dark;
+
+      --bg: #0d0f12;
+
+      --bg-elevated: #14181e;
+
+      --bg-card: #181c24;
+
+      --border: #2a313c;
+
+      --text: #e8eaed;
+
+      --muted: #9aa3b2;
+
+      --accent: #3dd6c6;
+
+      --accent-dim: rgba(61, 214, 198, 0.12);
+
+      --warm: #e8b86d;
+
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+
+      margin: 0;
+
+      font-family: Inter, "Segoe UI", system-ui, sans-serif;
+
+      background: var(--bg);
+
+      color: var(--text);
+
+      line-height: 1.6;
+
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+
+    a:hover { text-decoration: underline; }
+
+    .nav {
+
+      display: flex; justify-content: space-between; align-items: center;
+
+      max-width: 1080px; margin: 0 auto; padding: 20px 24px;
+
+    }
+
+    .nav-links { display: flex; gap: 20px; font-size: 14px; }
+
+    .nav-links a { color: var(--muted); }
+
+    .hero {
+
+      text-align: center; padding: 72px 24px 56px;
+
+      background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(61,214,198,0.08), transparent);
+
+    }
+
+    .hero-brand { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 28px; }
+
+    .hero-brand img { width: 64px; height: 64px; }
+
+    .hero-brand span { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+
+    .hero h1 { font-size: clamp(2.2rem, 5vw, 3.4rem); font-weight: 700; margin: 0 0 16px; letter-spacing: -0.02em; }
+
+    .hero .lead { max-width: 640px; margin: 0 auto 32px; font-size: 1.15rem; color: var(--muted); }
+
+    .cta-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+
+    .btn {
+
+      display: inline-block; padding: 12px 22px; border-radius: 10px; font-weight: 600; font-size: 15px;
+
+      border: 1px solid var(--border); transition: background 0.15s;
+
+    }
+
+    .btn-primary { background: var(--accent); color: #0d0f12; border-color: var(--accent); }
+
+    .btn-primary:hover { background: #4ee8d8; text-decoration: none; }
+
+    .btn-secondary { background: var(--bg-card); color: var(--text); }
+
+    .btn-secondary:hover { background: var(--bg-elevated); text-decoration: none; }
+
+    .section { max-width: 1080px; margin: 0 auto; padding: 56px 24px; }
+
+    .section h2 { font-size: 1.75rem; margin: 0 0 12px; letter-spacing: -0.02em; }
+
+    .section .sub { color: var(--muted); margin: 0 0 32px; max-width: 680px; }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+
+    .card {
+
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 28px;
+
+    }
+
+    .card h3 { margin: 0 0 8px; font-size: 1.1rem; }
+
+    .card p { margin: 0; color: var(--muted); font-size: 0.95rem; }
+
+    .badge-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+
+    .badge {
+
+      font-size: 12px; padding: 5px 10px; border-radius: 999px;
+
+      background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(61,214,198,0.25);
+
+    }
+
+    .highlight {
+
+      background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 16px;
+
+      padding: 32px; margin-top: 24px;
+
+    }
+
+    .highlight h3 { margin: 0 0 16px; color: var(--warm); font-size: 1rem; text-transform: uppercase; letter-spacing: 0.06em; }
+
+    .highlight ul { margin: 0; padding-left: 20px; color: var(--muted); }
+
+    .highlight li { margin-bottom: 8px; }
+
+    code {
+
+      font-family: "Cascadia Code", Consolas, monospace; font-size: 0.88em;
+
+      background: rgba(0,0,0,0.35); padding: 2px 6px; border-radius: 4px;
+
+    }
+
+    .family { text-align: center; padding: 48px 24px 72px; border-top: 1px solid var(--border); }
+
+    .family p { color: var(--muted); margin-bottom: 16px; }
+
+    .family-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+
+    .family-links a {
+
+      color: var(--text); border: 1px solid var(--border); padding: 8px 16px; border-radius: 8px; font-size: 14px;
+
+    }
+
+    .family-links a:hover { border-color: var(--accent); text-decoration: none; }
+
+    footer { text-align: center; padding: 24px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--border); }
+
+  </style>
+
+</head>
+
+<body>
+
+  <nav class="nav">
+
+    <strong>glyph-sO</strong>
+
+    <div class="nav-links">
+
+      <a href="https://github.com/FlokeStudio/glyph-sO">GitHub</a>
+
+      <a href="https://github.com/FlokeStudio/glyph-sO#user-section">Docs</a>
+
+      <a href="https://github.com/FlokeStudio/glyph-miO">glyph-miO</a>
+
+    </div>
+
+  </nav>
+
+
+
+  <header class="hero">
+
+    <div class="hero-brand">
+
+      <img src="https://obsidian.md/images/obsidian-logo-gradient.svg" alt="Obsidian">
+
+      <span>Obsidian Plugin</span>
+
+    </div>
+
+    <h1>Search your vault.<br>Find anything, fast.</h1>
+
+    <p class="lead">glyph-sO brings full-text search to Obsidian with keyboard-first navigation, smart ranking profiles, and an extended query language — all offline by default.</p>
+
+    <div class="cta-row">
+
+      <a class="btn btn-primary" href="https://github.com/FlokeStudio/glyph-sO">Get 2.8.0 (main)</a>
+
+      <a class="btn btn-secondary" href="https://github.com/FlokeStudio/glyph-sO/blob/main/README.md">Read the docs</a>
+
+    </div>
+
+  </header>
+
+
+
+  <section class="section">
+
+    <h2>What's new in 2.8.0</h2>
+
+    <p class="sub">Editor highlight on open, search stats, hover previews, and optional folder grouping — built on the persistent index from 2.7.3.</p>
+
+    <div class="grid">
+
+      <article class="card">
+
+        <h3>Editor highlight</h3>
+
+        <p>Open a result and jump straight to the first query match — selected and scrolled into view in the editor.</p>
+
+      </article>
+
+      <article class="card">
+
+        <h3>Search stats</h3>
+
+        <p>See <code>N results in M notes · X ms</code> in the modal header while you search.</p>
+
+      </article>
+
+      <article class="card">
+
+        <h3>Hover preview</h3>
+
+        <p>Extended snippet context on row hover — tooltip plus a floating preview panel.</p>
+
+      </article>
+
+      <article class="card">
+
+        <h3>Folder grouping</h3>
+
+        <p>Toggle folder headers in the results list when your vault is organized by directories.</p>
+
+        <div class="badge-row"><span class="badge">Settings → Group results by folder</span></div>
+
+      </article>
+
+      <article class="card">
+
+        <h3>Persistent index</h3>
+
+        <p><code>index-cache.json</code> in the plugin folder — reload skips unchanged files (from 2.7.3).</p>
+
+      </article>
+
+      <article class="card">
+
+        <h3>Search profiles</h3>
+
+        <p>Choose how the engine balances speed and precision: <code>legacy</code>, <code>balanced</code>, or <code>max-quality</code>.</p>
+
+      </article>
+
+    </div>
+
+    <div class="highlight">
+
+      <h3>Query examples</h3>
+
+      <ul>
+
+        <li><code>path:projects/</code> — notes under a folder</li>
+
+        <li><code>tag:evergreen</code> — filter by tag</li>
+
+        <li><code>"meeting notes" -archive</code> — phrase match, exclude archive</li>
+
+        <li><code>(idea OR draft) type:note</code> — OR group with type filter</li>
+
+      </ul>
+
+    </div>
+
+  </section>
+
+
+
+  <section class="section">
+
+    <h2>Built for how you think</h2>
+
+    <p class="sub">Obsidian's built-in quick switcher finds file names. glyph-sO searches inside your notes.</p>
+
+    <div class="grid">
+
+      <article class="card">
+
+        <h3>Keyboard-first</h3>
+
+        <p>Open search from the ribbon or assign a hotkey. Arrow keys navigate results; Enter opens the note at the matching snippet.</p>
+
+      </article>
+
+      <article class="card">
+
+        <h3>Layout &amp; transliteration</h3>
+
+        <p>Automatic EN↔RU keyboard layout fixes and rough Latin↔Cyrillic transliteration help when you type in the wrong layout.</p>
+
+      </article>
+
+      <article class="card">
+
+        <h3>Snippet previews</h3>
+
+        <p>See the matching passage before you jump. Cached snippet generation keeps scrolling through results smooth.</p>
+
+      </article>
+
+      <article class="card">
+
+        <h3>Offline-first</h3>
+
+        <p>Everything runs locally in your vault. Optional Ollama enrichment can expand queries when a local model is available.</p>
+
+      </article>
+
+    </div>
+
+  </section>
+
+
+
+  <section class="section">
+
+    <h2>Install</h2>
+
+    <p class="sub">Copy the release zip into your vault's plugin folder and enable in Settings → Community plugins.</p>
+
+    <div class="highlight">
+
+      <ul>
+
+        <li>Folder: <code>.obsidian/plugins/glyph-s-o/</code></li>
+
+        <li>Files: <code>manifest.json</code>, <code>main.js</code>, <code>styles.css</code>, <code>services/</code>, <code>vendor/</code></li>
+
+        <li>Open via ribbon 🔍 or command palette: <strong>Glyph: search vault</strong></li>
+
+      </ul>
+
+    </div>
+
+  </section>
+
+
+
+  <div class="family">
+
+    <p>Part of the Glyph 2.8 family</p>
+
+    <div class="family-links">
+
+      <a href="https://flokestudio.github.io/glyph-s/">glyph-s engine</a>
+
+      <a href="https://flokestudio.github.io/glyph-miO/">glyph-miO</a>
+
+      <a href="https://krwg.github.io/glyph-mi/">glyph-mi core</a>
+
+    </div>
+
+  </div>
+
+
+
+  <footer>GPL-3.0 · Floke Studio · glyph-sO 2.8</footer>
+
+</body>
+
+</html>
+

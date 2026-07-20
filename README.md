@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="ROADMAP.md">Roadmap</a> ·
+  <a href="https://github.com/FlokeStudio/glyph-s">glyph-s engine</a> ·
   <a href="https://flokestudio.github.io/glyph-sO/">Site</a> ·
   <a href="README.ru.md">README.ru</a> ·
   <a href="https://github.com/FlokeStudio/glyph-s">glyph-s</a> ·
@@ -48,7 +48,7 @@ The plugin is part of the **Glyph 2.8** family and runs on the shared [`glyph-s`
 
 **Persistent search index** — \index-cache.json\ in the plugin folder; vault reload reuses entries when \mtime\ matches (Settings → Persistent search index).
 
-**Technical roadmap** — see [ROADMAP.md](ROADMAP.md) for week-by-week Obsidian + engine priorities.
+**2.8.0** adds editor highlight on jump, folder grouping, hover preview, search stats, and **pinned queries** (Shift+click recent/pinned chips). Persistent vault index shipped in **2.7.3**.
 
 ### What’s new in 2.7.2
 

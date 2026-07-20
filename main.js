@@ -147,6 +147,7 @@ const DEFAULT_SETTINGS = {
   persistIndex: true,
   groupByFolder: false,
   recentQueries: [],
+  pinnedQueries: [],
 };
 
 const PROFILE_LABELS = {
@@ -737,22 +738,55 @@ class GlyphSearchModal extends Modal {
   renderTips() {
     if (!this.tipsEl) return;
     this.tipsEl.empty();
-    const recent = this.plugin.recentQueries || [];
-    if (!recent.length) {
-      this.tipsEl.setText('Glyph: раскладка + транслит · path:папка · tag:тег · не путать с Ctrl+O');
+    const pinned = this.plugin.pinnedQueries || [];
+    const recent = (this.plugin.recentQueries || []).filter(function (rq) {
+      return pinned.indexOf(rq) === -1;
+    });
+    const self = this;
+
+    if (pinned.length) {
+      this.tipsEl.createSpan({ text: 'Закреплено: ' });
+      pinned.slice(0, 5).forEach(function (pq, i) {
+        if (i) self.tipsEl.createSpan({ text: ' · ' });
+        const b = self.tipsEl.createEl('button', { cls: 'glyph-so-recent glyph-so-pinned', text: pq });
+        b.title = 'Shift+click to unpin';
+        b.addEventListener('click', function (e) {
+          if (e.shiftKey) {
+            self.plugin.unpinQuery(pq);
+            self.renderTips();
+            return;
+          }
+          self.inputEl.value = pq;
+          self.updateSuggest(pq);
+          self.render(pq);
+        });
+      });
+      if (recent.length) this.tipsEl.createSpan({ text: ' · ' });
+    }
+
+    if (!recent.length && !pinned.length) {
+      this.tipsEl.setText('Glyph: раскладка + транслит · path:папка · tag:тег · Shift+click recent to pin');
       return;
     }
-    this.tipsEl.createSpan({ text: 'Недавно: ' });
-    const self = this;
-    recent.slice(0, 5).forEach(function (rq, i) {
-      if (i) self.tipsEl.createSpan({ text: ' · ' });
-      const b = self.tipsEl.createEl('button', { cls: 'glyph-so-recent', text: rq });
-      b.addEventListener('click', function () {
-        self.inputEl.value = rq;
-        self.updateSuggest(rq);
-        self.render(rq);
+
+    if (recent.length) {
+      this.tipsEl.createSpan({ text: 'Недавно: ' });
+      recent.slice(0, 5).forEach(function (rq, i) {
+        if (i) self.tipsEl.createSpan({ text: ' · ' });
+        const b = self.tipsEl.createEl('button', { cls: 'glyph-so-recent', text: rq });
+        b.title = 'Shift+click to pin';
+        b.addEventListener('click', function (e) {
+          if (e.shiftKey) {
+            self.plugin.pinQuery(rq);
+            self.renderTips();
+            return;
+          }
+          self.inputEl.value = rq;
+          self.updateSuggest(rq);
+          self.render(rq);
+        });
       });
-    });
+    }
   }
 
   highlight(rows) {
@@ -920,6 +954,7 @@ class GlyphSoPlugin extends Plugin {
     );
 
     this.recentQueries = this.settings.recentQueries || [];
+    this.pinnedQueries = this.settings.pinnedQueries || [];
     this.ensureIndex();
     if (!this.settings.hideHotkeyHint) {
       new Notice(
@@ -936,6 +971,27 @@ class GlyphSoPlugin extends Plugin {
     list.unshift(q);
     this.recentQueries = list.slice(0, 8);
     this.settings.recentQueries = this.recentQueries;
+    this.saveSettings();
+  }
+
+  pinQuery(q) {
+    const query = String(q || '').trim();
+    if (!query) return;
+    const pinned = (this.pinnedQueries || []).filter(function (x) {
+      return x !== query;
+    });
+    pinned.unshift(query);
+    this.pinnedQueries = pinned.slice(0, 8);
+    this.settings.pinnedQueries = this.pinnedQueries;
+    this.saveSettings();
+  }
+
+  unpinQuery(q) {
+    const query = String(q || '').trim();
+    this.pinnedQueries = (this.pinnedQueries || []).filter(function (x) {
+      return x !== query;
+    });
+    this.settings.pinnedQueries = this.pinnedQueries;
     this.saveSettings();
   }
 
