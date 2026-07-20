@@ -85,7 +85,7 @@ function parseJsonLoose(text) {
   if (start < 0 || end < 0) return null;
   try {
     return JSON.parse(raw.slice(start, end + 1));
-  } catch (e) {
+  } catch {
     return null;
   }
 }
@@ -96,7 +96,7 @@ async function ollamaAvailable(options) {
   try {
     const res = await fetch(baseUrl + '/api/tags', { method: 'GET' });
     return res.ok;
-  } catch (e) {
+  } catch {
     return false;
   }
 }
@@ -126,7 +126,7 @@ async function ollamaJson(req, options) {
     const data = await res.json();
     const text = data.response != null ? data.response : null;
     return text ? parseJsonLoose(text) : null;
-  } catch (e) {
+  } catch {
     return null;
   } finally {
     clearTimeout(timer);
@@ -158,7 +158,7 @@ const PROFILE_LABELS = {
 function readVendorVersionStamp() {
   try {
     return require('./vendor/VERSION.json');
-  } catch (_) {
+  } catch {
     return null;
   }
 }
@@ -168,7 +168,7 @@ function getExpectedEngineVersion(manifest) {
   try {
     const versions = require('./versions.json');
     if (versions && versions.engine) return String(versions.engine);
-  } catch (_) {
+  } catch {
     return null;
   }
   return manifest && manifest.version ? String(manifest.version) : null;
@@ -210,7 +210,7 @@ function collectVaultTagSuggestions(app) {
         tags.add(String(t).replace(/^#/, ''));
       });
     }
-  } catch (_) {
+  } catch {
     void _;
   }
   try {
@@ -233,7 +233,7 @@ function collectVaultTagSuggestions(app) {
         tags.add(String(fm).replace(/^#/, ''));
       }
     }
-  } catch (_) {
+  } catch {
     void _;
   }
   return Array.from(tags).filter(Boolean).sort();
@@ -250,7 +250,7 @@ function collectVaultPathSuggestions(app) {
         if (acc) paths.add(acc);
       }
     });
-  } catch (_) {
+  } catch {
     void _;
   }
   return Array.from(paths).sort();
@@ -527,7 +527,7 @@ async function buildVaultIndex(app, plugin) {
   if (plugin && plugin.settings.persistIndex !== false) {
     try {
       await saveIndexCache(plugin, entriesMapFromItems(items));
-    } catch (e) {
+    } catch {
       void e;
     }
   }
@@ -588,7 +588,7 @@ class GlyphSearchModal extends Modal {
     try {
       this._tagSuggestions = collectVaultTagSuggestions(this.app);
       this._pathSuggestions = collectVaultPathSuggestions(this.app);
-    } catch (_) {
+    } catch {
       this._tagSuggestions = [];
       this._pathSuggestions = [];
     }
@@ -870,7 +870,6 @@ class GlyphSearchModal extends Modal {
     const query = this._lastQuery || '';
     const settings = this.plugin.settings;
     const leaf = newTab ? this.app.workspace.getLeaf('tab') : this.app.workspace.getLeaf(false);
-    const self = this;
     leaf.openFile(it.file).then(function () {
       const view = leaf.view;
       const editor = view && view.editor;

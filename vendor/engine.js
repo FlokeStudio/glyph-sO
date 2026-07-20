@@ -1,27 +1,11 @@
-/**
- * Query tokenization and extended search grammar.
- * @module tokenize
- */
-
-/**
- * Split a query into lowercase tokens on whitespace / punctuation.
- * @param {string} q
- * @returns {string[]}
- */
 function tokenizeQuery(q) {
   return String(q || '')
     .trim()
     .toLowerCase()
-    .split(/[\s#./_\-]+/)
+    .split(/[\s#./_-]+/)
     .filter(Boolean);
 }
 
-/**
- * Parse extended query grammar into tokens + structured filters.
- * Supports phrases, exclusions, OR groups, and type/page/app/path/tag filters.
- * @param {string} raw
- * @returns {import('./types.js').ParsedSearchQuery}
- */
 function parseSearchQuery(raw) {
   const text = String(raw || '').trim();
   const filters = {
@@ -207,44 +191,24 @@ function expandQueryVariants(rawQ, settings = {}) {
   return Array.from(set);
 }
 
-/**
- * Search quality/speed profiles for glyph-s.
- * Data lives in profiles.json; this module re-exports for ESM and CJS bundling.
- * @module profiles
- */
-
-/** @type {Record<string, import('./types.js').SearchProfileConfig>} */
 const PROFILE_SETTINGS = {
   legacy: { fuzzyCutoff: 0.4, scoreScale: 1, maxCandidates: 8000 },
   balanced: { fuzzyCutoff: 0.48, scoreScale: 1.08, maxCandidates: 4000 },
   'max-quality': { fuzzyCutoff: 0.35, scoreScale: 1.16, maxCandidates: 9000 },
 };
 
-/**
- * Resolve a profile name to its config (falls back to `legacy`).
- * @param {string} [profile]
- * @returns {import('./types.js').SearchProfileConfig}
- */
 function getProfileConfig(profile) {
   const key = String(profile || 'legacy').toLowerCase();
   return PROFILE_SETTINGS[key] || PROFILE_SETTINGS.legacy;
 }
 
-/** Stable list of known profile ids. */
 const PROFILE_IDS = Object.freeze(['legacy', 'balanced', 'max-quality']);
 
-/**
- * Glyph Search core: ranking, snippets, index + engine factory.
- * @module engine
- */
 
 
 
 
-
-/** @type {Record<string, number>} */
 const CAT_PRIORITY = { page: 40, note: 36, app: 32, release: 30, action: 24, news: 20 };
-/** @type {import('./types.js').SearchSettings} */
 const SEARCH_SETTINGS = { fuzzyLayout: true, fuzzyTransliteration: true };
 const TOKEN_VARIANT_CACHE = new Map();
 const SNIPPET_CACHE = new Map();
@@ -286,11 +250,6 @@ function getTokenVariantsCached(tok, settings) {
   return variants;
 }
 
-/**
- * @param {import('./types.js').SearchItem} it
- * @param {import('./types.js').ParsedSearchQuery|null|undefined} filters
- * @returns {boolean}
- */
 function matchesSearchFilters(it, filters) {
   if (!filters) return true;
   if (filters.type === 'release' && it.cat !== 'release') return false;
@@ -319,14 +278,6 @@ function matchesSearchFilters(it, filters) {
   return true;
 }
 
-/**
- * Score one item against query tokens / filters.
- * @param {import('./types.js').SearchItem} it
- * @param {string[]} tokens
- * @param {import('./types.js').ParsedSearchQuery|null|undefined} filters
- * @param {import('./types.js').SearchSettings} [settings]
- * @returns {number}
- */
 function scoreSearchItem(it, tokens, filters, settings = SEARCH_SETTINGS) {
   if (filters && !matchesSearchFilters(it, filters)) return 0;
   const title = it.title().toLowerCase();
@@ -424,14 +375,6 @@ function findSnippetInBlob(blob, tok, settings) {
   return null;
 }
 
-/**
- * Build a short HTML-friendly snippet for the first matching token.
- * @param {import('./types.js').SearchItem} it
- * @param {string[]} tokens
- * @param {(s: string) => string} [esc]
- * @param {import('./types.js').SearchSettings} [settings]
- * @returns {string}
- */
 function snippetForItem(it, tokens, esc = (s) => s, settings = SEARCH_SETTINGS) {
   if (!tokens.length) return '';
   const body = typeof it.body === 'function' ? it.body() : it.body || '';
@@ -464,10 +407,6 @@ function itemBodyText(it) {
   return String(it.body || '');
 }
 
-/**
- * Cheap haystack for fast-path gating. MUST include body — otherwise
- * paragraph-only hits never reach scoreSearchItem (full-text search broken).
- */
 function textBagForItem(it) {
   const title = String(it.title?.() || '').toLowerCase();
   const sub = String(it.sub || '').toLowerCase();
@@ -517,13 +456,6 @@ function collectTopK(scored, limit) {
   return top.sort((a, b) => b.score - a.score);
 }
 
-/**
- * Rank corpus items for a query string.
- * @param {import('./types.js').SearchItem[]} items
- * @param {string} q
- * @param {import('./types.js').RankSearchOptions} [opts]
- * @returns {import('./types.js').RankedHit[]}
- */
 function rankSearchItems(items, q, opts = {}) {
   const settings = { ...SEARCH_SETTINGS, ...(opts.settings || {}) };
   settings.profile = settings.profile || opts.profile || 'legacy';
@@ -533,7 +465,6 @@ function rankSearchItems(items, q, opts = {}) {
   const tokens = filters.tokens.length ? filters.tokens : tokenizeQuery(q);
   const limit = opts.limit ?? 12;
 
-  // Prefer precomputed bags from buildIndex / createSearchEngine when provided.
   const indexRows = Array.isArray(opts.index?.items) ? opts.index.items : null;
   const sourceLen = indexRows ? indexRows.length : items.length;
   const candidates = [];
@@ -567,12 +498,6 @@ function rankSearchItems(items, q, opts = {}) {
   return out;
 }
 
-/**
- * Pre-compute text bags for repeated searches.
- * @param {import('./types.js').SearchItem[]} [items]
- * @param {import('./types.js').BuildIndexOptions} [opts]
- * @returns {import('./types.js').SearchIndex}
- */
 function buildIndex(items = [], opts = {}) {
   const profile = opts.profile || 'legacy';
   const index = items.map((it, idx) => ({
@@ -584,11 +509,6 @@ function buildIndex(items = [], opts = {}) {
   return { items: index, profile, createdAt: Date.now() };
 }
 
-/**
- * Create a reusable search engine bound to an index / items.
- * @param {import('./types.js').CreateSearchEngineOptions} [options]
- * @returns {import('./types.js').SearchEngine}
- */
 function createSearchEngine(options = {}) {
   const profile = options.profile || 'balanced';
   const settings = { ...SEARCH_SETTINGS, ...(options.settings || {}), profile };

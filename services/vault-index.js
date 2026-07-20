@@ -58,7 +58,7 @@ async function loadIndexCache(plugin) {
     const engine = plugin.manifest.glyphEngineVersion || plugin.manifest.version;
     if (data.engineVersion && engine && data.engineVersion !== engine) return null;
     return data;
-  } catch (e) {
+  } catch {
     return null;
   }
 }

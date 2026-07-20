@@ -1,6 +1,7 @@
 module.exports = [
   {
     files: ['**/*.js'],
+    ignores: ['vendor/**', 'node_modules/**', 'test/**', 'vitest.config.js'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'commonjs',
@@ -17,10 +18,17 @@ module.exports = [
       },
     },
     rules: {
-      'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      'no-unused-vars': ['error', { argsIgnorePattern: '^_', caughtErrors: 'none' }],
     },
   },
   {
-    ignores: ['vendor/**', 'node_modules/**'],
+    files: ['test/**/*.js', 'vitest.config.js'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+    },
+    rules: {
+      'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    },
   },
 ];
