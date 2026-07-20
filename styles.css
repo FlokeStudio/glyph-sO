@@ -230,7 +230,7 @@
 
 .glyph-so-mark {
 
-  background: var(--text-highlight-bg, #ffeb3b33);
+  background: var(--text-highlight-bg);
 
   color: inherit;
 

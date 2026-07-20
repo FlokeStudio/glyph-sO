@@ -10,6 +10,7 @@
 </p>
 
 <p align="center">
+  <a href="ROADMAP.md">Roadmap</a> ·
   <a href="https://flokestudio.github.io/glyph-sO/">Site</a> ·
   <a href="README.ru.md">README.ru</a> ·
   <a href="https://github.com/FlokeStudio/glyph-s">glyph-s</a> ·
@@ -32,6 +33,12 @@ The plugin is part of the **Glyph 2.7** family and runs on the shared [`glyph-s`
 | Snippets | No | Yes — jump to the match |
 | Query filters | Limited | `path:`, `tag:`, phrases, OR, excludes |
 | Offline | Yes | Yes (Ollama optional) |
+
+### What’s new in 2.7.3
+
+**Persistent search index** — \index-cache.json\ in the plugin folder; vault reload reuses entries when \mtime\ matches (Settings → Persistent search index).
+
+**Technical roadmap** — see [ROADMAP.md](ROADMAP.md) for week-by-week Obsidian + engine priorities.
 
 ### What’s new in 2.7.2
 

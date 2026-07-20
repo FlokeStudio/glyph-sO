@@ -6,6 +6,12 @@ const {
   Setting,
 } = require('obsidian');
 const { rankGlyphResults, queryAlternatives } = require('./services/search-engine');
+const {
+  hydrateEntry,
+  loadIndexCache,
+  saveIndexCache,
+  entriesMapFromItems,
+} = require('./services/vault-index');
 
 const DEFAULT_OLLAMA_URL = 'http://127.0.0.1:11434';
 const DEFAULT_OLLAMA_MODEL = 'llama3.2';
@@ -132,6 +138,7 @@ const DEFAULT_SETTINGS = {
   compactMode: true,
   hideHotkeyHint: false,
   showSearchDiagnostics: false,
+  persistIndex: true,
   recentQueries: [],
 };
 
@@ -361,6 +368,20 @@ class GlyphSoSettingTab extends PluginSettingTab {
       diagSetting.setTooltip('Uses the glyph-s onDiagnostics hook from the vendored engine.');
     }
     new Setting(containerEl)
+      .setName('Persistent search index')
+      .setDesc('Cache indexed note text in index-cache.json (plugin folder). Reload skips unchanged files.')
+      .addToggle((t) =>
+        t.setValue(this.plugin.settings.persistIndex !== false).onChange(async (v) => {
+          this.plugin.settings.persistIndex = v;
+          await this.plugin.saveSettings();
+          if (v) {
+            this.plugin.indexReady = false;
+            this.plugin._indexPromise = null;
+            this.plugin.ensureIndex();
+          }
+        })
+      );
+    new Setting(containerEl)
       .setName('Hotkey hint')
       .setDesc('Ctrl+Shift+G opens Glyph Search. Ctrl+O in Obsidian is Quick Switcher (file names only).')
       .addToggle((t) =>
@@ -436,12 +457,30 @@ function indexOneFile(app, f) {
   );
 }
 
-async function buildVaultIndex(app) {
+async function buildVaultIndex(app, plugin) {
   const files = app.vault.getMarkdownFiles();
+  const cached = plugin ? await loadIndexCache(plugin) : null;
+  const cachedEntries = cached && cached.entries ? cached.entries : {};
   const items = [];
+  const toIndex = [];
   const batch = 32;
-  for (let i = 0; i < files.length; i += batch) {
-    const slice = files.slice(i, i + batch);
+
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i];
+    const mtime = f.stat ? f.stat.mtime : 0;
+    const row = cachedEntries[f.path];
+    if (row && row.mtime === mtime) {
+      const hydrated = hydrateEntry(app, row);
+      if (hydrated) {
+        items.push(hydrated);
+        continue;
+      }
+    }
+    toIndex.push(f);
+  }
+
+  for (let i = 0; i < toIndex.length; i += batch) {
+    const slice = toIndex.slice(i, i + batch);
     const chunk = await Promise.all(
       slice.map(function (f) {
         return indexOneFile(app, f);
@@ -449,6 +488,14 @@ async function buildVaultIndex(app) {
     );
     for (let c = 0; c < chunk.length; c++) {
       if (chunk[c]) items.push(chunk[c]);
+    }
+  }
+
+  if (plugin && plugin.settings.persistIndex !== false) {
+    try {
+      await saveIndexCache(plugin, entriesMapFromItems(items));
+    } catch (e) {
+      /* non-fatal */
     }
   }
   return items;
@@ -817,6 +864,7 @@ class GlyphSoPlugin extends Plugin {
           });
           if (ix >= 0) self.indexItems[ix] = item;
           else self.indexItems.push(item);
+          self.persistIndexDebounced();
         });
       }, 400);
       return;
@@ -829,10 +877,19 @@ class GlyphSoPlugin extends Plugin {
     }, 2500);
   }
 
+  persistIndexDebounced() {
+    const self = this;
+    if (self.settings.persistIndex === false) return;
+    clearTimeout(self._persistTimer);
+    self._persistTimer = setTimeout(function () {
+      saveIndexCache(self, entriesMapFromItems(self.indexItems)).catch(function () {});
+    }, 1200);
+  }
+
   ensureIndex() {
     if (this._indexPromise) return this._indexPromise;
     const self = this;
-    this._indexPromise = buildVaultIndex(this.app)
+    this._indexPromise = buildVaultIndex(this.app, this)
       .then(function (items) {
         self.indexItems = items;
         self.indexReady = true;
