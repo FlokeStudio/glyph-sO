@@ -824,8 +824,10 @@ class GlyphSearchModal extends Modal {
     this.items = this.plugin.indexItems;
     let query = normalizeQuery(q);
     this.updateLayoutHint(query);
-    if (this.plugin.settings.useOllamaEnrich && query.length > 2 && this._ollamaEnrichFor === query) {
+    if (this.plugin.settings.useOllamaEnrich && query.length > 2 && this._ollamaEnrichFor !== query) {
+      this._ollamaEnrichFor = query;
       const ok = await ollamaAvailable({ ollamaUrl: this.plugin.settings.ollamaUrl });
+      if (gen !== this._renderGen) return;
       if (ok) {
         const enriched = await ollamaJson(
           {
@@ -839,6 +841,7 @@ class GlyphSearchModal extends Modal {
             timeoutMs: 6000,
           }
         );
+        if (gen !== this._renderGen) return;
         if (enriched && enriched.q) query = normalizeQuery(enriched.q);
       }
     }
